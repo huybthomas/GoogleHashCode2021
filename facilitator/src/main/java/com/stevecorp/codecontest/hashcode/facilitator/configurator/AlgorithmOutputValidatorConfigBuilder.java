@@ -1,4 +1,4 @@
-package com.stevecorp.codecontest.hashcode.facilitator.config;
+package com.stevecorp.codecontest.hashcode.facilitator.configurator;
 
 public interface AlgorithmOutputValidatorConfigBuilder {
 

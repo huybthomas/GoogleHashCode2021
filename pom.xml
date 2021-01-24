@@ -24,19 +24,25 @@
         <maven.resources.plugin.version>3.1.0</maven.resources.plugin.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- MODULE DEPENDENCIES -->
+            <dependency>
+                <groupId>com.stevecorp.codecontest</groupId>
+                <artifactId>facilitator</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.stevecorp.codecontest</groupId>
+                <artifactId>example</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+        <!-- OTHER TO BE ACTIVATED DEPENDENCIES -->
+    </dependencyManagement>
+
     <dependencies>
-        <!-- MODULES -->
-        <dependency>
-            <groupId>com.stevecorp.codecontest</groupId>
-            <artifactId>facilitator</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.stevecorp.codecontest</groupId>
-            <artifactId>example</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- DEPENDENCIES -->
+        <!-- GLOBALLY ACCESSIBLE DEPENDENCIES -->
     </dependencies>
 
     <build>
@@ -62,6 +68,7 @@
                 <version>${maven.resources.plugin.version}</version>
                 <configuration>
                     <encoding>${character.encoding}</encoding>
+                    <includeEmptyDirs>true</includeEmptyDirs>
                 </configuration>
             </plugin>
         </plugins>
