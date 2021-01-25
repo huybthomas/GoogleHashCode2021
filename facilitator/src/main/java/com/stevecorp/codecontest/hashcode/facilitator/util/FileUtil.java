@@ -5,6 +5,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import static java.text.MessageFormat.format;
 
@@ -39,6 +40,15 @@ public class FileUtil {
             throw new RuntimeException(format("''{0}'' is not a folder!", fullFolderPath));
         }
         return folderPath;
+    }
+
+    public static List<String> readFileContents(final Path filePath) {
+        try {
+            return Files.readAllLines(filePath);
+        } catch (final Exception e) {
+            throw new RuntimeException(format("Unable to read file contents of file ''{0}''",
+                    filePath.getFileName().toString()), e);
+        }
     }
 
 }

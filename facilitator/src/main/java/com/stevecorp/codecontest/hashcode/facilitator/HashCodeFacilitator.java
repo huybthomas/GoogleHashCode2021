@@ -8,7 +8,9 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.InputSpecific
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.OutputProducerConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.ScoreCalculatorConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputParser;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.InputModel;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,6 +27,7 @@ import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SPECIFIC_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolder;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolderFromResources;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.readFileContents;
 
 public class HashCodeFacilitator implements
         InputSpecificationConfigBuilder,
@@ -46,7 +49,7 @@ public class HashCodeFacilitator implements
     /**
      * Setup step 2: Input parsing
      */
-    private Object inputParser;
+    private InputParser<? extends InputModel> inputParser;
 
     /**
      * Setup step 3: Algorithm selection
@@ -100,7 +103,8 @@ public class HashCodeFacilitator implements
     }
 
     @Override
-    public AlgorithmSpecificationConfigBuilder withInputParser(final Object o) {
+    public AlgorithmSpecificationConfigBuilder withInputParser(final InputParser<? extends InputModel> inputParser) {
+        this.inputParser = inputParser;
         return this;
     }
 
@@ -144,6 +148,9 @@ public class HashCodeFacilitator implements
     @Override
     public void run() {
         final List<Path> inputFilePaths = getInputFilePaths();
+
+        // Replace / Update this when actual implementation
+        final InputModel input = inputParser.parseInput(readFileContents(inputFilePaths.get(0)));
     }
 
     private List<Path> getInputFilePaths() {

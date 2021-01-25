@@ -19,6 +19,7 @@
         <java.version>14</java.version>
         <character.encoding>UTF-8</character.encoding>
         <!-- DEPENDENCY VERSIONS -->
+        <lombok.version>1.18.16</lombok.version>
         <!-- PLUGIN VERSIONS -->
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.resources.plugin.version>3.1.0</maven.resources.plugin.version>
@@ -43,6 +44,12 @@
 
     <dependencies>
         <!-- GLOBALLY ACCESSIBLE DEPENDENCIES -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -60,6 +67,13 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <encoding>${character.encoding}</encoding>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
