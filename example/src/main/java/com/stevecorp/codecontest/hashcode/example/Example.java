@@ -1,9 +1,9 @@
 package com.stevecorp.codecontest.hashcode.example;
 
+import com.stevecorp.codecontest.hashcode.example.algorithm.SteveGorithmNoParams;
+import com.stevecorp.codecontest.hashcode.example.algorithm.SteveGorithmParams;
 import com.stevecorp.codecontest.hashcode.example.component.InputParserImpl;
 import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.Algorithm;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.ParametrizedAlgorithm;
 
 public class Example {
 
@@ -12,8 +12,8 @@ public class Example {
                 .forSpecificInputFiles("many_pizzas")
                 .withInputParser(new InputParserImpl())
                 .withAlgorithms(
-                        new Algorithm(),
-                        new ParametrizedAlgorithm())
+                        new SteveGorithmParams(),
+                        new SteveGorithmNoParams())
                 .withAlgorithmOutputValidator("outputValidator")
                 .withScoreCalculator("scoreCalculator")
                 .withOutputProducer("outputProducer")
