@@ -4,6 +4,6 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.Alg
 
 public interface AlgorithmSpecificationConfigBuilder {
 
-    AlgorithmOutputValidatorConfigBuilder withAlgorithms(AlgorithmSpecification... algorithms);
+    OutputValidatorConfigBuilder withAlgorithms(AlgorithmSpecification<?, ?>... algorithms);
 
 }

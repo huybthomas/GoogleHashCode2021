@@ -5,6 +5,6 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.I
 
 public interface InputParserConfigBuilder {
 
-    AlgorithmSpecificationConfigBuilder withInputParser(final InputParser<? extends InputModel> inputParser);
+    AlgorithmSpecificationConfigBuilder withInputParser(InputParser<? extends InputModel> inputParser);
 
 }

@@ -1,16 +1,18 @@
 package com.stevecorp.codecontest.hashcode.facilitator;
 
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.AlgorithmOutputValidatorConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.AlgorithmSpecificationConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.FinalConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.InputParserConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.InputSpecificationConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.OutputProducerConfigBuilder;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.OutputValidatorConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.ScoreCalculatorConfigBuilder;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputParser;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.InputModel;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,7 +35,7 @@ public class HashCodeFacilitator implements
         InputSpecificationConfigBuilder,
         InputParserConfigBuilder,
         AlgorithmSpecificationConfigBuilder,
-        AlgorithmOutputValidatorConfigBuilder,
+        OutputValidatorConfigBuilder,
         ScoreCalculatorConfigBuilder,
         OutputProducerConfigBuilder,
         FinalConfigBuilder {
@@ -54,12 +56,12 @@ public class HashCodeFacilitator implements
     /**
      * Setup step 3: Algorithm selection
      */
-    private List<AlgorithmSpecification> algorithms;
+    private List<AlgorithmSpecification<? extends InputModel, ? extends OutputModel>> algorithms;
 
     /**
-     * Setup step 4: Algorithm output validation
+     * Setup step 4: Output validation
      */
-    private Optional<Object> algorithmOutputValidator;
+    private Optional<OutputValidator<? extends InputModel, ? extends OutputModel>> outputValidator;
 
     /**
      * Setup step 5: Algorithm output score calculator
@@ -74,7 +76,7 @@ public class HashCodeFacilitator implements
     private HashCodeFacilitator() {
         this.inputFileLocation = getFolderFromResources("input");
         this.outputFileLocation = getFolderFromResources("output");
-        this.algorithmOutputValidator = Optional.empty();
+        this.outputValidator = Optional.empty();
     }
 
     public static InputSpecificationConfigBuilder configurator() {
@@ -109,17 +111,19 @@ public class HashCodeFacilitator implements
     }
 
     @Override
-    public AlgorithmOutputValidatorConfigBuilder withAlgorithms(final AlgorithmSpecification... algorithms) {
+    public OutputValidatorConfigBuilder withAlgorithms(final AlgorithmSpecification<?, ?>... algorithms) {
+        this.algorithms = Arrays.asList(algorithms);
         return this;
     }
 
     @Override
-    public ScoreCalculatorConfigBuilder dontValidateAlgorithmOutput() {
+    public ScoreCalculatorConfigBuilder dontValidateOutput() {
         return this;
     }
 
     @Override
-    public ScoreCalculatorConfigBuilder withAlgorithmOutputValidator(final Object algorithmOutputValidator) {
+    public ScoreCalculatorConfigBuilder withOutputValidator(final OutputValidator<? extends InputModel, ? extends OutputModel> outputValidator) {
+        this.outputValidator = Optional.of(outputValidator);
         return this;
     }
 
