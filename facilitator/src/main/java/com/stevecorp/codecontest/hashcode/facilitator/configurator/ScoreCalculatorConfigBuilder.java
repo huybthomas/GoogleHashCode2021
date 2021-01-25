@@ -4,8 +4,8 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.I
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCalculator;
 
-public interface ScoreCalculatorConfigBuilder {
+public interface ScoreCalculatorConfigBuilder<T extends InputModel, U extends OutputModel> {
 
-    OutputProducerConfigBuilder withScoreCalculator(ScoreCalculator<? extends InputModel, ? extends OutputModel> scoreCalculator);
+    OutputProducerConfigBuilder<U> withScoreCalculator(ScoreCalculator<T, U> scoreCalculator);
 
 }

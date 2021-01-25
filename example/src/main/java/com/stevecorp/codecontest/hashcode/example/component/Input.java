@@ -5,8 +5,9 @@ import lombok.Builder;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-@Builder
+@Builder(toBuilder = true)
 public class Input implements InputModel {
 
     public int numberOfPizzas;
@@ -15,13 +16,22 @@ public class Input implements InputModel {
     public int numberOf4PersonTeams;
     public List<Pizza> pizzas;
 
-    @Builder
+    @Builder(toBuilder = true)
     public static final class Pizza {
 
         public int id;
         public int numberOfIngredients;
         public Set<Integer> ingredients;
 
+    }
+
+    @Override
+    public Input cloneInput() {
+        return this.toBuilder()
+                .pizzas(this.pizzas.stream()
+                        .map(pizza -> pizza.toBuilder().build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 
 }

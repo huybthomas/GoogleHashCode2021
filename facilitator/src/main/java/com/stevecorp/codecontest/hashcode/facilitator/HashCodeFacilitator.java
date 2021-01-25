@@ -33,13 +33,13 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFo
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolderFromResources;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.readFileContents;
 
-public class HashCodeFacilitator implements
-        InputSpecificationConfigBuilder,
-        InputParserConfigBuilder,
-        AlgorithmSpecificationConfigBuilder,
-        OutputValidatorConfigBuilder,
-        ScoreCalculatorConfigBuilder,
-        OutputProducerConfigBuilder,
+public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> implements
+        InputSpecificationConfigBuilder<T, U>,
+        InputParserConfigBuilder<T, U>,
+        AlgorithmSpecificationConfigBuilder<T, U>,
+        OutputValidatorConfigBuilder<T, U>,
+        ScoreCalculatorConfigBuilder<T, U>,
+        OutputProducerConfigBuilder<U>,
         FinalConfigBuilder {
 
     /**
@@ -53,27 +53,27 @@ public class HashCodeFacilitator implements
     /**
      * Setup step 2: Input parsing
      */
-    private InputParser<? extends InputModel> inputParser;
+    private InputParser<T> inputParser;
 
     /**
      * Setup step 3: Algorithm selection
      */
-    private List<AlgorithmSpecification<? extends InputModel, ? extends OutputModel>> algorithms;
+    private List<AlgorithmSpecification<T, U>> algorithms;
 
     /**
      * Setup step 4: Output validation
      */
-    private Optional<OutputValidator<? extends InputModel, ? extends OutputModel>> outputValidator;
+    private Optional<OutputValidator<T, U>> outputValidator;
 
     /**
      * Setup step 5: Algorithm output score calculator
      */
-    private Object scoreCalculator;
+    private ScoreCalculator<T, U> scoreCalculator;
 
     /**
      * Setup step 6: Algorithm output producer
      */
-    private Object outputProducer;
+    private OutputProducer<U> outputProducer;
 
     private HashCodeFacilitator() {
         this.inputFileLocation = getFolderFromResources("input");
@@ -81,62 +81,62 @@ public class HashCodeFacilitator implements
         this.outputValidator = Optional.empty();
     }
 
-    public static InputSpecificationConfigBuilder configurator() {
-        return new HashCodeFacilitator();
+    public static InputSpecificationConfigBuilder<?, ?> configurator() {
+        return new HashCodeFacilitator<>();
     }
 
 
     @Override
-    public InputParserConfigBuilder forAllInputFiles() {
+    public InputParserConfigBuilder<T, U> forAllInputFiles() {
         this.inputSpecifier = ALL_INPUT_FILES;
         return this;
     }
 
     @Override
-    public InputParserConfigBuilder forASingleInputFile(final String inputFileName) {
+    public InputParserConfigBuilder<T, U> forASingleInputFile(final String inputFileName) {
         this.inputSpecifier = SINGLE_INPUT_FILE;
         this.selectedInputFileNames = Set.of(inputFileName);
         return this;
     }
 
     @Override
-    public InputParserConfigBuilder forSpecificInputFiles(final String... inputFileNames) {
+    public InputParserConfigBuilder<T, U> forSpecificInputFiles(final String... inputFileNames) {
         this.inputSpecifier = SPECIFIC_INPUT_FILES;
         this.selectedInputFileNames = new HashSet<>(Arrays.asList(inputFileNames));
         return this;
     }
 
     @Override
-    public AlgorithmSpecificationConfigBuilder withInputParser(final InputParser<? extends InputModel> inputParser) {
+    public AlgorithmSpecificationConfigBuilder<T, U> withInputParser(final InputParser<T> inputParser) {
         this.inputParser = inputParser;
         return this;
     }
 
     @Override
-    public OutputValidatorConfigBuilder withAlgorithms(final AlgorithmSpecification<?, ?>... algorithms) {
+    public OutputValidatorConfigBuilder<T, U> withAlgorithms(final AlgorithmSpecification<T, U>... algorithms) {
         this.algorithms = Arrays.asList(algorithms);
         return this;
     }
 
     @Override
-    public ScoreCalculatorConfigBuilder dontValidateOutput() {
+    public ScoreCalculatorConfigBuilder<T, U> dontValidateOutput() {
         return this;
     }
 
     @Override
-    public ScoreCalculatorConfigBuilder withOutputValidator(final OutputValidator<? extends InputModel, ? extends OutputModel> outputValidator) {
+    public ScoreCalculatorConfigBuilder<T, U> withOutputValidator(final OutputValidator<T, U> outputValidator) {
         this.outputValidator = Optional.of(outputValidator);
         return this;
     }
 
     @Override
-    public OutputProducerConfigBuilder withScoreCalculator(final ScoreCalculator<? extends InputModel, ? extends OutputModel> scoreCalculator) {
+    public OutputProducerConfigBuilder<U> withScoreCalculator(final ScoreCalculator<T, U> scoreCalculator) {
         this.scoreCalculator = scoreCalculator;
         return this;
     }
 
     @Override
-    public FinalConfigBuilder withOutputProducer(final OutputProducer<? extends OutputModel> outputProducer) {
+    public FinalConfigBuilder withOutputProducer(final OutputProducer<U> outputProducer) {
         this.outputProducer = outputProducer;
         return this;
     }
@@ -155,10 +155,26 @@ public class HashCodeFacilitator implements
 
     @Override
     public void run() {
-        final List<Path> inputFilePaths = getInputFilePaths();
+        for (final Path inputFilePath : getInputFilePaths()) {
+            final T input = inputParser.parseInput(readFileContents(inputFilePath));
 
-        // Replace / Update this when actual implementation
-        final InputModel input = inputParser.parseInput(readFileContents(inputFilePaths.get(0)));
+            U bestOutput = null;
+            long bestScore = Long.MIN_VALUE;
+
+            for (final AlgorithmSpecification<T, U> algorithm : algorithms) {
+                final T clonedInput = input.cloneInput();
+                final U output = algorithm.solve(clonedInput);
+                outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
+                final long score = scoreCalculator.calculateScore(clonedInput, output);
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestOutput = output;
+                }
+            }
+
+            final List<String> outputString = outputProducer.produceOutput(bestOutput);
+            System.out.println();
+        }
     }
 
     private List<Path> getInputFilePaths() {

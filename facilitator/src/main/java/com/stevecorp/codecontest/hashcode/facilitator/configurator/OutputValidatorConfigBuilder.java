@@ -4,9 +4,9 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.I
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
 
-public interface OutputValidatorConfigBuilder {
+public interface OutputValidatorConfigBuilder<T extends InputModel, U extends OutputModel> {
 
-    ScoreCalculatorConfigBuilder dontValidateOutput();
-    ScoreCalculatorConfigBuilder withOutputValidator(OutputValidator<? extends InputModel, ? extends OutputModel> outputValidator);
+    ScoreCalculatorConfigBuilder<T, U> dontValidateOutput();
+    ScoreCalculatorConfigBuilder<T, U> withOutputValidator(OutputValidator<T, U> outputValidator);
 
 }
