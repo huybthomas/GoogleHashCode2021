@@ -13,6 +13,7 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSp
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.InputModel;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCalculator;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -128,7 +129,8 @@ public class HashCodeFacilitator implements
     }
 
     @Override
-    public OutputProducerConfigBuilder withScoreCalculator(final Object scoreCalculator) {
+    public OutputProducerConfigBuilder withScoreCalculator(final ScoreCalculator<? extends InputModel, ? extends OutputModel> scoreCalculator) {
+        this.scoreCalculator = scoreCalculator;
         return this;
     }
 
