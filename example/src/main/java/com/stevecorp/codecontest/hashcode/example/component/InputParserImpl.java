@@ -23,10 +23,12 @@ public class InputParserImpl implements InputParser<Input> {
         final int numberOf3PersonTeams = inputHeading[2];
         final int numberOf4PersonTeams = inputHeading[3];
 
+        final int[] idCounter = { 0 };
         final Map<String, Integer> ingredientIdMapping = new HashMap<>();
         final List<Input.Pizza> pizzas = input.subList(1, input.size()).stream()
                 .map(pizzaInputString -> Arrays.asList(pizzaInputString.split(" ")))
                 .map(pizzaInput -> Input.Pizza.builder()
+                        .id(idCounter[0]++)
                         .numberOfIngredients(Integer.parseInt(pizzaInput.get(0)))
                         .ingredients(mapToIngredientIds(ingredientIdMapping, pizzaInput.subList(1, pizzaInput.size())))
                         .build())

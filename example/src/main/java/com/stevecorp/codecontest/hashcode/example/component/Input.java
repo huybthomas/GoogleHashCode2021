@@ -18,6 +18,7 @@ public class Input implements InputModel {
     @Builder
     public static final class Pizza {
 
+        public int id;
         public int numberOfIngredients;
         public Set<Integer> ingredients;
 
