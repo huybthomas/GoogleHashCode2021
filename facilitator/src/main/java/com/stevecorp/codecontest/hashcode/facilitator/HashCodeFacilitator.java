@@ -11,6 +11,7 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.Alg
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputParser;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.model.InputModel;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputProducer;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCalculator;
@@ -135,7 +136,8 @@ public class HashCodeFacilitator implements
     }
 
     @Override
-    public FinalConfigBuilder withOutputProducer(final Object outputProducer) {
+    public FinalConfigBuilder withOutputProducer(final OutputProducer<? extends OutputModel> outputProducer) {
+        this.outputProducer = outputProducer;
         return this;
     }
 
