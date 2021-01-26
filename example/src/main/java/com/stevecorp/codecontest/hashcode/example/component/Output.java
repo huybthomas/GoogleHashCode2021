@@ -1,6 +1,6 @@
 package com.stevecorp.codecontest.hashcode.example.component;
 
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.model.OutputModel;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputModel;
 import lombok.Builder;
 
 import java.util.List;

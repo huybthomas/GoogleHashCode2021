@@ -10,16 +10,17 @@ import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
 
 public class Example {
 
+    // boundedParameter,enumeratedParameters
+
     public static void main(final String... args) {
-        HashCodeFacilitator.configurator()
+        new HashCodeFacilitator<>(
+                new InputParserImpl(),
+                new ScoreCalculatorImpl(),
+                new OutputProducerImpl())
                 .forSpecificInputFiles("many_pizzas")
-                .withInputParser(new InputParserImpl())
-                .withAlgorithms(
-                        new SteveGorithmParams(),
-                        new SteveGorithmNoParams())
+                .withAlgorithm(new SteveGorithmNoParams())
+                .withAlgorithm(new SteveGorithmParams())
                 .withOutputValidator(new OutputValidatorImpl())
-                .withScoreCalculator(new ScoreCalculatorImpl())
-                .withOutputProducer(new OutputProducerImpl())
                 .run();
     }
 

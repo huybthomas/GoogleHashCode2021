@@ -1,7 +1,7 @@
 package com.stevecorp.codecontest.hashcode.example.component;
 
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidationException;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.exception.OutputValidationException;
 
 import java.util.HashSet;
 import java.util.Set;

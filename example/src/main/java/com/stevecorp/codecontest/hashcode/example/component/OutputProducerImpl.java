@@ -21,7 +21,7 @@ public class OutputProducerImpl implements OutputProducer<Output> {
     }
 
     private String deliveryToString(final Output.Delivery delivery) {
-        return delivery.teamSize + delivery.pizzaIds.stream()
+        return delivery.teamSize + " " + delivery.pizzaIds.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(" "));
     }

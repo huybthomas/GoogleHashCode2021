@@ -1,4 +1,4 @@
-package com.stevecorp.codecontest.hashcode.facilitator.configurator.output.exception;
+package com.stevecorp.codecontest.hashcode.facilitator.configurator.output;
 
 import static java.text.MessageFormat.format;
 
