@@ -18,6 +18,7 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFo
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolderFromResources;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.readFileContents;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.writeToFile;
+import static java.text.MessageFormat.format;
 
 public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
@@ -75,10 +76,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         final List<Path> inputFilePaths = getFilePathsFromFolder(inputFileLocation, fileName ->
                 selectedInputFileNames == null || selectedInputFileNames.stream().anyMatch(fileName::contains));
         for (final Path inputFilePath : inputFilePaths) {
+            System.out.println(format("Input file: {0}", inputFilePath.getFileName().toString()));
             final T input = inputParser.parseInput(readFileContents(inputFilePath));
 
             U bestOutput = null;
             long bestScore = Long.MIN_VALUE;
+            AlgorithmSpecification<T, U> bestAlgorithm = null;
 
             for (final AlgorithmSpecification<T, U> algorithm : algorithms) {
                 final T clonedInput = input.cloneInput();
@@ -87,11 +90,15 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                     outputValidator.validateOutput(clonedInput, output);
                 }
                 final long score = scoreCalculator.calculateScore(clonedInput, output);
+                System.out.println(format("Score for algorithm ''{0}'': {1}", algorithm.getAlgorithmName(), score));
                 if (score > bestScore) {
                     bestScore = score;
                     bestOutput = output;
+                    bestAlgorithm = algorithm;
                 }
             }
+
+            System.out.println(format("Best algorithm: ''{0}'', score: ''{1}''", bestAlgorithm.getAlgorithmName(), bestScore));
 
             final List<String> outputString = outputProducer.produceOutput(bestOutput);
             writeToFile(outputFileLocation, inputFilePath, outputString);
