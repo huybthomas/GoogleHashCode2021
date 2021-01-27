@@ -70,7 +70,9 @@ public class FileUtil {
     public static void writeToFile(final Path destinationFolderPath, final Path inputFile, final List<String> content) {
         try {
             final String inputFileName = inputFile.getFileName().toString();
-            final String outputFileName = inputFileName.substring(0, inputFileName.lastIndexOf(".")) + ".out";
+            final String outputFileName = inputFileName.contains(".")
+                    ? inputFileName.substring(0, inputFileName.lastIndexOf(".")) + ".out"
+                    : inputFileName + ".out";
             final Path outputFilePath = destinationFolderPath.resolve(outputFileName);
             Files.write(outputFilePath, content);
         } catch (final IOException e) {

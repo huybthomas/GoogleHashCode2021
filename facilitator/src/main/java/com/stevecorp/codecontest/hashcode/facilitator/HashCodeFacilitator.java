@@ -26,11 +26,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private Path outputFileLocation = getFolderFromResources("output");
 
     private final InputParser<T> inputParser;
+    private final List<AlgorithmSpecification<T, U>> algorithms = new ArrayList<>();
     private final ScoreCalculator<T, U> scoreCalculator;
     private final OutputProducer<U> outputProducer;
 
     private Set<String> selectedInputFileNames;
-    private List<AlgorithmSpecification<T, U>> algorithms = new ArrayList<>();
     private OutputValidator<T, U> outputValidator;
 
     public HashCodeFacilitator(
@@ -98,7 +98,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 }
             }
 
-            System.out.println(format("Best algorithm: ''{0}'', score: ''{1}''", bestAlgorithm.getAlgorithmName(), bestScore));
+            System.out.println(format("Best algorithm: ''{0}'' - score: ''{1}''", bestAlgorithm.getAlgorithmName(), bestScore));
 
             final List<String> outputString = outputProducer.produceOutput(bestOutput);
             writeToFile(outputFileLocation, inputFilePath, outputString);

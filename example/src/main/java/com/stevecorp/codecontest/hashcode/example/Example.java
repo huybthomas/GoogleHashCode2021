@@ -1,7 +1,6 @@
 package com.stevecorp.codecontest.hashcode.example;
 
-import com.stevecorp.codecontest.hashcode.example.algorithm.SteveGorithmNoParams;
-import com.stevecorp.codecontest.hashcode.example.algorithm.SteveGorithmParams;
+import com.stevecorp.codecontest.hashcode.example.algorithm.SteveBasicAlgorithm;
 import com.stevecorp.codecontest.hashcode.example.component.InputParserImpl;
 import com.stevecorp.codecontest.hashcode.example.component.OutputProducerImpl;
 import com.stevecorp.codecontest.hashcode.example.component.OutputValidatorImpl;
@@ -17,9 +16,7 @@ public class Example {
                 new InputParserImpl(),
                 new ScoreCalculatorImpl(),
                 new OutputProducerImpl())
-                .forSpecificInputFiles("many_pizzas")
-                .withAlgorithm(new SteveGorithmNoParams())
-                .withAlgorithm(new SteveGorithmParams())
+                .withAlgorithm(new SteveBasicAlgorithm())
                 .withOutputValidator(new OutputValidatorImpl())
                 .run();
     }
