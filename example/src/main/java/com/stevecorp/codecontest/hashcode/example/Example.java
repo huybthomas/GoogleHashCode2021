@@ -12,12 +12,14 @@ public class Example {
     // boundedParameter,enumeratedParameters
 
     public static void main(final String... args) {
-        new HashCodeFacilitator<>(
-                new InputParserImpl(),
-                new ScoreCalculatorImpl(),
-                new OutputProducerImpl())
-                .withAlgorithm(new SteveBasicAlgorithm())
+        HashCodeFacilitator.configurator()
+                .forSelectedInputFiles("many_ingredients", "many_pizzas")
+                .withInputParser(new InputParserImpl())
+                .withAlgorithms(new SteveBasicAlgorithm())
                 .withOutputValidator(new OutputValidatorImpl())
+                .withScoreCalculator(new ScoreCalculatorImpl())
+                .withOutputProducer(new OutputProducerImpl())
+                .withCustomOutputFolder("C:\\Users\\Steve\\Downloads\\hashcode_output")
                 .run();
     }
 
