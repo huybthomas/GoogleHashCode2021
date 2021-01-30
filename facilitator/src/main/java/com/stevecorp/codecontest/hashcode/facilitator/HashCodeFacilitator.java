@@ -1,6 +1,11 @@
 package com.stevecorp.codecontest.hashcode.facilitator;
 
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.Algorithm;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.BasicAlgorithm;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.ParameterizedAlgorithm;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.BoundedParameter;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.EnumeratedParameter;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputModel;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputParser;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier;
@@ -16,16 +21,15 @@ import java.util.Optional;
 
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.ALL_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SELECTED_INPUT_FILES;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.simpleName;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.CollectionUtils.join;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFilePathsFromFolder;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolder;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolderFromResources;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.readFileContents;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.writeToFile;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.toFileName;
 import static java.text.MessageFormat.format;
 
-@SuppressWarnings({ "unused, unchecked", "rawtypes", "OptionalUsedAsFieldOrParameterType" })
+@SuppressWarnings({ "unused, unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
 public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private static final Path DEFAULT_INPUT_FOLDER = getFolderFromResources("input");
@@ -34,7 +38,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private final InputSpecifier inputSpecifier;
     private final List<String> inputFileNames;
     private final InputParser<T> inputParser;
-    private final List<AlgorithmSpecification<T, U>> algorithms;
+    private final List<AlgorithmSpecification<T, U>> algorithmSpecifications;
     private final Optional<OutputValidator<T, U>> outputValidator;
     private final ScoreCalculator<T, U> scoreCalculator;
     private final OutputProducer<U> outputProducer;
@@ -45,7 +49,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         this.inputSpecifier = builder.inputSpecifier;
         this.inputFileNames = builder.inputFileNames;
         this.inputParser = builder.inputParser;
-        this.algorithms = builder.algorithms;
+        this.algorithmSpecifications = builder.algorithmSpecifications;
         this.outputValidator = Optional.ofNullable(builder.outputValidator);
         this.scoreCalculator = builder.scoreCalculator;
         this.outputProducer = builder.outputProducer;
@@ -58,36 +62,50 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     }
 
     public void run() {
-        final List<Path> inputFilePaths = getFilePathsFromFolder(inputFolder, fileName ->
-                inputSpecifier == ALL_INPUT_FILES || inputFileNames.stream().anyMatch(fileName::contains));
-        for (final Path inputFilePath : inputFilePaths) {
-            System.out.println(format("Input file: {0}", inputFilePath.getFileName().toString()));
+        // TODO CONTINUE, BEAUTIFY
+        for (final Path inputFilePath : getInputFilePaths()) {
+            System.out.println(format("Processing: ''{0}''", toFileName(inputFilePath)));
             final T input = inputParser.parseInput(readFileContents(inputFilePath));
-
-            U bestOutput = null;
-            long bestScore = Long.MIN_VALUE;
-            AlgorithmSpecification<T, U> bestAlgorithm = null;
-
-            for (final AlgorithmSpecification<T, U> algorithm : algorithms) {
-                final T clonedInput = input.cloneInput();
-                final U output = algorithm.solve(clonedInput);
-                outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
-                final long score = scoreCalculator.calculateScore(clonedInput, output);
-                System.out.println(format("Score for algorithm ''{0}'': {1}", simpleName(algorithm), score));
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestOutput = output;
-                    bestAlgorithm = algorithm;
+            long progress = 0;
+            final long numberOfScenarios = getNumberOfScenarios();
+            for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
+                final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
+                if (algorithm instanceof BasicAlgorithm) {
+                    // handle basic algo
+                } else if (algorithm instanceof ParameterizedAlgorithm) {
+                    // handle parameterized algorithm, get all permutations
                 }
             }
-
-            assert bestAlgorithm != null;
-
-            System.out.println(format("Best algorithm: ''{0}'' - score: ''{1}''", bestAlgorithm.getClass().getSimpleName(), bestScore));
-
-            final List<String> outputString = outputProducer.produceOutput(bestOutput);
-            writeToFile(outputFolder, inputFilePath, outputString);
         }
+    }
+
+    private List<Path> getInputFilePaths() {
+        return getFilePathsFromFolder(inputFolder, fileName ->
+                inputSpecifier == ALL_INPUT_FILES || inputFileNames.stream().anyMatch(fileName::contains));
+    }
+
+    private long getNumberOfScenarios() {
+        // TODO BEAUTIFY
+        int count = 0;
+        for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
+            if (algorithmSpecification.getAlgorithm() instanceof BasicAlgorithm) {
+                count += 1;
+            } else {
+                count += algorithmSpecification.getParameters().stream()
+                        .mapToLong(parameter -> {
+                            if (parameter instanceof BoundedParameter) {
+                                final BoundedParameter boundedParameter = (BoundedParameter) parameter;
+                                return (boundedParameter.getUpperLimit() - boundedParameter.getLowerLimit()) / boundedParameter.getStepSize();
+                            }
+                            if (parameter instanceof EnumeratedParameter) {
+                                return ((EnumeratedParameter) parameter).getValues().size();
+                            }
+                            throw new RuntimeException("Bla");
+                        })
+                        .reduce(1, Math::multiplyExact);
+            }
+        }
+        return count;
     }
 
     /**************************************************************************************************************
@@ -99,7 +117,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         InputSpecifier inputSpecifier;
         List<String> inputFileNames;
         InputParser<T> inputParser;
-        List<AlgorithmSpecification<T, U>> algorithms;
+        List<AlgorithmSpecification<T, U>> algorithmSpecifications;
         OutputValidator<T, U> outputValidator;
         ScoreCalculator<T, U> scoreCalculator;
         OutputProducer<U> outputProducer;
@@ -165,8 +183,8 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
-        public Configurator_OutputValidator<T, U> withAlgorithms(final AlgorithmSpecification algorithm, final AlgorithmSpecification... additionalAlgorithms) {
-            configBuilder.algorithms = join(algorithm, additionalAlgorithms);
+        public Configurator_OutputValidator<T, U> withAlgorithms(final AlgorithmSpecification algorithmSpecifications, final AlgorithmSpecification... additionalAlgorithmSpecifications) {
+            configBuilder.algorithmSpecifications = join(algorithmSpecifications, additionalAlgorithmSpecifications);
             return new Configurator_OutputValidator<>(this);
         }
 

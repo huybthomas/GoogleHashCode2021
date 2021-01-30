@@ -2,7 +2,7 @@ package com.stevecorp.codecontest.hashcode.example.algorithm;
 
 import com.stevecorp.codecontest.hashcode.example.component.Input;
 import com.stevecorp.codecontest.hashcode.example.component.Output;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.Algorithm;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.BasicAlgorithm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -16,8 +16,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class SteveBasicAlgorithm extends Algorithm<Input, Output> {
+public class SteveBasicAlgorithm extends BasicAlgorithm<Input, Output> {
 
+    @Override
     public Output solve(final Input input) {
 
         final long[] ingredientCounter = { 0 };

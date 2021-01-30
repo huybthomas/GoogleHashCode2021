@@ -50,7 +50,7 @@ public class FileUtils {
             return Files.readAllLines(filePath);
         } catch (final Exception e) {
             throw new RuntimeException(format("Unable to read file contents of file ''{0}''",
-                    filePath.getFileName().toString()), e);
+                    toFileName(filePath)), e);
         }
     }
 
@@ -58,18 +58,18 @@ public class FileUtils {
         try {
             return Files.list(folderPath)
                     .filter(file -> !Files.isDirectory(file))
-                    .filter(file -> fileNameMatcher.test(file.getFileName().toString()))
+                    .filter(file -> fileNameMatcher.test(toFileName(file)))
                     .sorted()
                     .collect(Collectors.toList());
         } catch (final IOException e) {
             throw new RuntimeException(format("Unable to read files for folder ''{0}''",
-                    folderPath.getFileName().toString()), e);
+                    toFileName(folderPath)), e);
         }
     }
 
     public static void writeToFile(final Path destinationFolderPath, final Path inputFile, final List<String> content) {
         try {
-            final String inputFileName = inputFile.getFileName().toString();
+            final String inputFileName = toFileName(inputFile);
             final String outputFileName = inputFileName.contains(".")
                     ? inputFileName.substring(0, inputFileName.lastIndexOf(".")) + ".out"
                     : inputFileName + ".out";
@@ -77,8 +77,12 @@ public class FileUtils {
             Files.write(outputFilePath, content);
         } catch (final IOException e) {
             throw new RuntimeException(format("Unable to write algorithm output for input file ''{0}'' to the output folder ''{1}''",
-                    inputFile.getFileName().toString(), destinationFolderPath.toString()), e);
+                    toFileName(inputFile), destinationFolderPath.toString()), e);
         }
+    }
+
+    public static String toFileName(final Path filePath) {
+        return filePath.getFileName().toString();
     }
 
 }
