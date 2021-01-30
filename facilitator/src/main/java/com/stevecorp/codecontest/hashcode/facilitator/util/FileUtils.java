@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 
 import static java.text.MessageFormat.format;
 
-public class FileUtil {
+public class FileUtils {
 
     public static Path getFolderFromResources(final String folderName) {
         try {
-            final URL folderURL = FileUtil.class.getClassLoader().getResource(folderName);
+            final URL folderURL = FileUtils.class.getClassLoader().getResource(folderName);
             if (folderURL == null) {
                 throw new RuntimeException(format(
                         "Failed to retrieve the ''{0}'' folder from the resources folder - make sure it exists!",

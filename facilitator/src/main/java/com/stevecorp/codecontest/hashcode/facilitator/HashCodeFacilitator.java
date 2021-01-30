@@ -16,12 +16,13 @@ import java.util.Optional;
 
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.ALL_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SELECTED_INPUT_FILES;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.simpleName;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.CollectionUtils.join;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFilePathsFromFolder;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolder;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.getFolderFromResources;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.readFileContents;
-import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtil.writeToFile;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFilePathsFromFolder;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolder;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolderFromResources;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.readFileContents;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.writeToFile;
 import static java.text.MessageFormat.format;
 
 @SuppressWarnings({ "unused, unchecked", "rawtypes", "OptionalUsedAsFieldOrParameterType" })
@@ -72,7 +73,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 final U output = algorithm.solve(clonedInput);
                 outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
                 final long score = scoreCalculator.calculateScore(clonedInput, output);
-                System.out.println(format("Score for algorithm ''{0}'': {1}", algorithm.getAlgorithmName(), score));
+                System.out.println(format("Score for algorithm ''{0}'': {1}", simpleName(algorithm), score));
                 if (score > bestScore) {
                     bestScore = score;
                     bestOutput = output;

@@ -7,8 +7,4 @@ public interface AlgorithmSpecification<T extends InputModel, U extends OutputMo
 
     U solve(T input);
 
-    default String getAlgorithmName() {
-        return this.getClass().getSimpleName();
-    }
-
 }
