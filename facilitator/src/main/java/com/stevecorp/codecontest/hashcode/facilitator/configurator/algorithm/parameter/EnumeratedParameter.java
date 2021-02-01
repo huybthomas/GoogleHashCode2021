@@ -16,4 +16,9 @@ public class EnumeratedParameter extends AlgorithmParameter {
         this.values = CollectionUtils.join(value1, additionalValues);
     }
 
+    @Override
+    public long getNumberOfScenarios() {
+        return values.size();
+    }
+
 }

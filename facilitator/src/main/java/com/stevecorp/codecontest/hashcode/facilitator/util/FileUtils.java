@@ -85,4 +85,13 @@ public class FileUtils {
         return filePath.getFileName().toString();
     }
 
+    public static void cleanFolderContents(final Path folderPath) {
+        try {
+            org.apache.commons.io.FileUtils.cleanDirectory(folderPath.toFile());
+        } catch (final Exception e) {
+            throw new RuntimeException(format("Unable to clean the directory contents for folder: ''{0}''",
+                    toFileName(folderPath)), e);
+        }
+    }
+
 }

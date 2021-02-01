@@ -7,6 +7,8 @@ public abstract class AlgorithmParameter {
 
     private final String name;
 
+    public abstract long getNumberOfScenarios();
+
     public AlgorithmParameter(final String name) {
         this.name = name;
     }

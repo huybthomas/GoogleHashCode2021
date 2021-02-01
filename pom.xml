@@ -20,6 +20,7 @@
         <character.encoding>UTF-8</character.encoding>
         <!-- DEPENDENCY VERSIONS -->
         <lombok.version>1.18.16</lombok.version>
+        <commons.io.version>2.8.0</commons.io.version>
         <!-- PLUGIN VERSIONS -->
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.resources.plugin.version>3.1.0</maven.resources.plugin.version>
@@ -49,6 +50,11 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
         </dependency>
     </dependencies>
 

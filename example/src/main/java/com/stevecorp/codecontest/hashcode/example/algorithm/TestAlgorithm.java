@@ -15,8 +15,8 @@ public class TestAlgorithm extends ParameterizedAlgorithm<Input, Output> {
     private int parameter1;
 
     @Override
-    protected void handleParameters(final Map<String, Object> parameters) {
-        this.parameter1 = (int) parameters.get(PARAMETER_1_KEY);
+    public void handleParameters(final Map<String, Object> parameters) {
+        this.parameter1 = ((Number) parameters.get(PARAMETER_1_KEY)).intValue();
     }
 
     @Override

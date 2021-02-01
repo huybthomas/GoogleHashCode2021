@@ -8,7 +8,7 @@ import java.util.Map;
 
 public abstract class ParameterizedAlgorithm<T extends InputModel, U extends OutputModel> implements Algorithm<T, U> {
 
-    protected abstract void handleParameters(Map<String, Object> parameters);
+    public abstract void handleParameters(Map<String, Object> parameters);
 
     @Override
     public void preAlgorithmSetup() {}

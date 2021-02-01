@@ -3,6 +3,8 @@ package com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.pa
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmParameter;
 import lombok.Getter;
 
+import static java.lang.Math.floorDiv;
+
 @Getter
 public class BoundedParameter extends AlgorithmParameter {
 
@@ -16,4 +18,10 @@ public class BoundedParameter extends AlgorithmParameter {
         this.upperLimit = upperLimit;
         this.stepSize = stepSize;
     }
+
+    @Override
+    public long getNumberOfScenarios() {
+        return floorDiv(upperLimit - lowerLimit, stepSize);
+    }
+
 }
