@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.ALL_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SELECTED_INPUT_FILES;
@@ -41,6 +42,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private static final Path DEFAULT_INPUT_FOLDER = getFolderFromResources("input");
     private static final Path DEFAULT_OUTPUT_FOLDER = getFolderFromResources("output");
+    private static final int PROGRESS_BAR_LENGTH = 50;
 
     private final InputSpecifier inputSpecifier;
     private final List<String> inputFileNames;
@@ -93,8 +95,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                         bestScore = score;
                         bestOutput = output;
                     }
-                    progress++;
-                    System.out.println(progress);
+                    printProgressBar(++progress, numberOfScenarios);
 
                 } else if (algorithm instanceof ParameterizedAlgorithm) {
 
@@ -115,15 +116,15 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                                 bestOutput = output;
                             }
                             parameterPermutation.put(parameterState.getParameter().getName(), parameterState.next());
-                            progress++;
-                            System.out.println(progress);
+                            printProgressBar(++progress, numberOfScenarios);
+
                         }
                     }
 
                 }
             }
 
-            System.out.println("Best score: " + bestScore);
+            System.out.println(format("Best score: {0}\n", bestScore));
             writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(bestOutput));
         }
     }
@@ -166,6 +167,20 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private Map<String, Object> initializeParameterMap(final List<ParameterState<?>> parameterStates) {
         return parameterStates.stream()
                 .collect(Collectors.toMap(parameterState -> parameterState.getParameter().getName(), ParameterState::next));
+    }
+
+    private void printProgressBar(final long currentScenarioIndex, final long totalNumberOfScenarios) {
+        final double percentualProgress = 1.0 * currentScenarioIndex / totalNumberOfScenarios;
+        final long progressBarProgress = (long) Math.floor(PROGRESS_BAR_LENGTH * percentualProgress);
+        final StringBuilder progressBar = new StringBuilder();
+        progressBar.append('[');
+        IntStream.range(0, (int) progressBarProgress).forEach(index -> progressBar.append("="));
+        IntStream.range(0, (int) (PROGRESS_BAR_LENGTH - progressBarProgress)).forEach(index -> progressBar.append(" "));
+        progressBar.append("]");
+        System.out.print(format("\r{0} {1}%", progressBar.toString(), (percentualProgress * 100)));
+        if (currentScenarioIndex == totalNumberOfScenarios) {
+            System.out.print("\n");
+        }
     }
 
     /**************************************************************************************************************

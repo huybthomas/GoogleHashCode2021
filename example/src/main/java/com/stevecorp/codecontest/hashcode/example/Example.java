@@ -16,7 +16,10 @@ public class Example {
 
     public static void main(final String... args) {
         HashCodeFacilitator.configurator()
-                .forSelectedInputFiles("many_pizzas")
+                .forSelectedInputFiles(
+                        "many_pizzas",
+                        "many_teams"
+                )
                 .withInputParser(new InputParserImpl())
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
@@ -25,7 +28,7 @@ public class Example {
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(new TestAlgorithm())
                                 .withParameters(
-                                        new BoundedParameter(PARAMETER_1_KEY, 0, 500, 1))
+                                        new BoundedParameter(PARAMETER_1_KEY, 0, 2500, 1))
                                 .build()
                 )
                 .withOutputValidator(new OutputValidatorImpl())
