@@ -109,7 +109,6 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             }
             scoreTracker.printReport();
             writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
-            System.out.print("\n");
         }
     }
 
