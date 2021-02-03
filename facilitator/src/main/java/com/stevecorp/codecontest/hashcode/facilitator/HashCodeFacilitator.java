@@ -14,7 +14,6 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.Output
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputProducer;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.OutputValidator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCalculator;
-import lombok.Getter;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -73,32 +72,22 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     public void run() {
         preFacilitatorSetup();
         for (final Path inputFilePath : getInputFilePaths()) {
-            System.out.println(format("Processing: ''{0}''", toFileName(inputFilePath)));
+            System.out.println(format("Processing input file: ''{0}''", toFileName(inputFilePath)));
             final T input = inputParser.parseInput(readFileContents(inputFilePath));
-            long progress = 0;
+            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>();
             final long numberOfScenarios = getNumberOfScenarios();
-
-            U bestOutput = null;
-            long bestScore = Long.MIN_VALUE;
-
+            long progress = 0;
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
                 final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
-
                 if (algorithm instanceof BasicAlgorithm) {
-
                     final BasicAlgorithm<T, U> basicAlgorithm = (BasicAlgorithm<T, U>) algorithm;
                     final T clonedInput = input.cloneInput();
                     final U output = basicAlgorithm.solve(clonedInput);
                     outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
                     final long score = scoreCalculator.calculateScore(clonedInput, output);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestOutput = output;
-                    }
+                    scoreTracker.handleUpdate(score, output, basicAlgorithm.getClass());
                     printProgressBar(++progress, numberOfScenarios);
-
                 } else if (algorithm instanceof ParameterizedAlgorithm) {
-
                     final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
                     final List<ParameterState<?>> parameterStates = algorithmSpecification.getParameters().stream()
                             .map(this::toParameterState)
@@ -111,21 +100,16 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                             final U output = parameterizedAlgorithm.solve(clonedInput);
                             outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
                             final long score = scoreCalculator.calculateScore(clonedInput, output);
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestOutput = output;
-                            }
-                            parameterPermutation.put(parameterState.getParameter().getName(), parameterState.next());
+                            scoreTracker.handleUpdate(score, output, parameterizedAlgorithm.getClass(), parameterPermutation);
                             printProgressBar(++progress, numberOfScenarios);
-
+                            parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
                         }
                     }
-
                 }
             }
-
-            System.out.println(format("Best score: {0}\n", bestScore));
-            writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(bestOutput));
+            scoreTracker.printReport();
+            writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
+            System.out.print("\n");
         }
     }
 
@@ -166,7 +150,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private Map<String, Object> initializeParameterMap(final List<ParameterState<?>> parameterStates) {
         return parameterStates.stream()
-                .collect(Collectors.toMap(parameterState -> parameterState.getParameter().getName(), ParameterState::next));
+                .collect(Collectors.toMap(parameterState -> parameterState.parameter.getName(), ParameterState::next));
+    }
+
+    private void doAlgorithmIteration(final T input, final Algorithm<T, U> algorithm) {
     }
 
     private void printProgressBar(final long currentScenarioIndex, final long totalNumberOfScenarios) {
@@ -184,10 +171,46 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     }
 
     /**************************************************************************************************************
+     ***   Class to track the best algorithm per input (with additional details)                                ***
+     **************************************************************************************************************/
+
+    public static class ScoreTracker<T extends InputModel, U extends OutputModel> {
+
+        long bestScore;
+        U bestOutput;
+        Class<? extends Algorithm> bestAlgorithm;
+        Optional<Map<String, Object>> bestAlgorithmParameters;
+
+        public ScoreTracker() {
+            this.bestScore = Long.MIN_VALUE;
+        }
+
+        void handleUpdate(final long score, final U output, final Class<? extends BasicAlgorithm> algorithmClass) {
+            handleUpdate(score, output, algorithmClass, null);
+        }
+
+        void handleUpdate(final long score, final U output, final Class<? extends Algorithm> algorithmClass, final Map<String, Object> parameters) {
+            if (score > bestScore) {
+                bestScore = score;
+                bestOutput = output;
+                bestAlgorithm = algorithmClass;
+                bestAlgorithmParameters = Optional.ofNullable(parameters);
+            }
+        }
+
+        void printReport() {
+            System.out.println("Optimal solution for input:");
+            System.out.println(format("\tAlgorithm: {0}", simpleName(bestAlgorithm)));
+            System.out.println(format("\tScore: {0}", bestScore));
+            bestAlgorithmParameters.ifPresent(stringObjectMap -> System.out.println(format("\tParameters: {0}", stringObjectMap)));
+        }
+
+    }
+
+    /**************************************************************************************************************
      ***   Classes for parameter permutation streaming                                                          ***
      **************************************************************************************************************/
 
-    @Getter
     public static abstract class ParameterState<V extends AlgorithmParameter>  {
 
         V parameter;
@@ -198,6 +221,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         public ParameterState(final V parameter) {
             this.parameter = parameter;
         }
+
     }
 
     public static final class ParameterState_Bounded extends ParameterState<BoundedParameter>  {
