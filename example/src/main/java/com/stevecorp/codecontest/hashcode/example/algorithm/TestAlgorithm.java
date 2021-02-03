@@ -21,7 +21,6 @@ public class TestAlgorithm extends ParameterizedAlgorithm<Input, Output> {
 
     @Override
     public Output solve(final Input input) {
-        System.out.println("P1: " + parameter1);
         return Output.builder()
                 .teamsWithPizzaDelivery(1)
                 .deliveries(List.of(

@@ -75,15 +75,29 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             final T input = inputParser.parseInput(readFileContents(inputFilePath));
             long progress = 0;
             final long numberOfScenarios = getNumberOfScenarios();
+
+            U bestOutput = null;
+            long bestScore = Long.MIN_VALUE;
+
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
                 final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
 
-                U bestOutput = null;
-                long bestScore = Long.MIN_VALUE;
-
                 if (algorithm instanceof BasicAlgorithm) {
-                    // handle basic algo
+
+                    final BasicAlgorithm<T, U> basicAlgorithm = (BasicAlgorithm<T, U>) algorithm;
+                    final T clonedInput = input.cloneInput();
+                    final U output = basicAlgorithm.solve(clonedInput);
+                    outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
+                    final long score = scoreCalculator.calculateScore(clonedInput, output);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestOutput = output;
+                    }
+                    progress++;
+                    System.out.println(progress);
+
                 } else if (algorithm instanceof ParameterizedAlgorithm) {
+
                     final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
                     final List<ParameterState<?>> parameterStates = algorithmSpecification.getParameters().stream()
                             .map(this::toParameterState)
@@ -102,20 +116,20 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                             }
                             parameterPermutation.put(parameterState.getParameter().getName(), parameterState.next());
                             progress++;
+                            System.out.println(progress);
                         }
                     }
+
                 }
-
-                System.out.println("Best score: " + bestScore);
-                writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(bestOutput));
-
             }
+
+            System.out.println("Best score: " + bestScore);
+            writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(bestOutput));
         }
     }
 
     private void preFacilitatorSetup() {
         if (!outputFolder.equals(DEFAULT_OUTPUT_FOLDER)) {
-            System.out.println("yes");
             cleanFolderContents(outputFolder);
         }
     }
