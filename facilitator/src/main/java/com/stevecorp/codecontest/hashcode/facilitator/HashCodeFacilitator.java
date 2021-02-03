@@ -203,6 +203,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             System.out.println(format("\tAlgorithm: {0}", simpleName(bestAlgorithm)));
             System.out.println(format("\tScore: {0}", bestScore));
             bestAlgorithmParameters.ifPresent(stringObjectMap -> System.out.println(format("\tParameters: {0}", stringObjectMap)));
+            System.out.print("\n");
         }
 
     }

@@ -10,7 +10,4 @@ public abstract class ParameterizedAlgorithm<T extends InputModel, U extends Out
 
     public abstract void handleParameters(Map<String, Object> parameters);
 
-    @Override
-    public void preAlgorithmSetup() {}
-
 }

@@ -5,7 +5,6 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.Output
 
 public interface Algorithm<T extends InputModel, U extends OutputModel> {
 
-    void preAlgorithmSetup();
     U solve(T input);
 
 }

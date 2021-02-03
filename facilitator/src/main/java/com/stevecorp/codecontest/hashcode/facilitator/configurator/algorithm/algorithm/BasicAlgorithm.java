@@ -6,7 +6,4 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.output.Output
 
 public abstract class BasicAlgorithm<T extends InputModel, U extends OutputModel> implements Algorithm<T, U> {
 
-    @Override
-    public void preAlgorithmSetup() {}
-
 }
