@@ -292,7 +292,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static final class ParameterState_Bounded extends ParameterState<BoundedParameter>  {
 
-        Number value;
+        long value;
 
         public ParameterState_Bounded(final BoundedParameter parameter) {
             super(parameter);
@@ -306,12 +306,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         @Override
         boolean hasNext() {
-            return value.doubleValue() + parameter.getStepSize() <= parameter.getUpperLimit();
+            return value + parameter.getStepSize() <= parameter.getUpperLimit();
         }
 
         @Override
         Number next() {
-            this.value = value.doubleValue() + parameter.getStepSize();
+            this.value = value + parameter.getStepSize();
             return value;
         }
 

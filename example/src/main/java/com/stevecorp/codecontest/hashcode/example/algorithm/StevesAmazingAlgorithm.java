@@ -13,27 +13,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm.PizzaIngredientScoreOperation.SUM;
+
 public class StevesAmazingAlgorithm extends ParameterizedAlgorithm<Input, Output> {
+
+    public static final String PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR = "P1";
+    public static final String PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR = "P2";
+
+    private long ingredientPunishmentFactor;
+    private PizzaIngredientScoreOperation pizzaIngredientScoreOperation;
 
     @Override
     public void handleParameters(final Map<String, Object> parameters) {
+        this.ingredientPunishmentFactor = (long) parameters.get(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR);
+        this.pizzaIngredientScoreOperation = (PizzaIngredientScoreOperation) parameters.get(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR);
+        System.out.println(ingredientPunishmentFactor + " - " + pizzaIngredientScoreOperation);
     }
 
     @Override
     public Output solve(final Input input) {
 
-        final long[] ingredientCounter = { 0 };
         final Map<Integer, Long> ingredientCounts = input.pizzas.stream()
                 .map(pizza -> pizza.ingredients)
-                .peek(ingredients -> ingredientCounter[0] += ingredients.size())
                 .flatMap(Collection::stream)
                 .collect(Collectors.groupingBy(value -> value, Collectors.counting()));
+        final double averageIngredientCount = ingredientCounts.values().stream()
+                .mapToLong(value -> value)
+                .average().orElseThrow(() -> new RuntimeException("Could not calculate average ingredient count"));
+        final Map<Integer, Double> percentualIngredientOccurrences = ingredientCounts.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> (1.0 * entry.getValue() / averageIngredientCount) * 100
+                ));
 
         final List<Input.Pizza> sortedPizzas = input.pizzas.stream()
-                .map(pizza -> new AbstractMap.SimpleEntry<>(pizza.id, getIngredientScore(pizza, ingredientCounts, ingredientCounter[0])))
+                .map(pizza -> new AbstractMap.SimpleEntry<>(pizza.id, getIngredientScore(pizza, percentualIngredientOccurrences)))
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
                 .map(pizzaScoreEntry -> input.pizzas.get(pizzaScoreEntry.getKey()))
                 .collect(Collectors.toList());
@@ -45,10 +63,11 @@ public class StevesAmazingAlgorithm extends ParameterizedAlgorithm<Input, Output
 
     }
 
-    private long getIngredientScore(final Input.Pizza pizza, final Map<Integer, Long> ingredientCounts, final long totalNumberOfIngredients) {
-        return pizza.ingredients.stream()
-                .mapToLong(ingredient -> totalNumberOfIngredients - ingredientCounts.get(ingredient))
-                .sum();
+    private double getIngredientScore(final Input.Pizza pizza, final Map<Integer, Double> percentualIngredientOccurrences) {
+        final DoubleStream ingredientCountStream = pizza.ingredients.stream()
+                .mapToDouble(ingredient -> ingredientPunishmentFactor / percentualIngredientOccurrences.get(ingredient));
+        return pizzaIngredientScoreOperation == SUM ? ingredientCountStream.sum()
+                : ingredientCountStream.reduce(1, (a, b) -> a * b);
     }
 
     private Output solveForAbundanceOfPizzas(final Input input, final List<Input.Pizza> sortedPizzas) {
@@ -141,6 +160,10 @@ public class StevesAmazingAlgorithm extends ParameterizedAlgorithm<Input, Output
         final Set<Integer> pizzaIds = new HashSet<>();
         pizzaIds.add(pizzaId);
         return pizzaIds;
+    }
+
+    public enum PizzaIngredientScoreOperation {
+        SUM, MULTIPLICATION
     }
 
 }

@@ -8,21 +8,30 @@ import com.stevecorp.codecontest.hashcode.example.component.ScoreCalculatorImpl;
 import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.BoundedParameter;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.EnumeratedParameter;
+
+import static com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm.PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR;
+import static com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm.PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR;
+import static com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm.PizzaIngredientScoreOperation.MULTIPLICATION;
+import static com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm.PizzaIngredientScoreOperation.SUM;
 
 public class Example {
 
     public static void main(final String... args) {
         HashCodeFacilitator.configurator()
-                .forSelectedInputFiles(
-                        "many_pizzas",
-                        "many_teams"
-                )
+//                .forAllInputFiles()
+//                .forSelectedInputFiles(
+//                        "many_pizzas",
+//                        "many_teams"
+//                )
+                .forASingleInputFile("example")
                 .withInputParser(new InputParserImpl())
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(new StevesAmazingAlgorithm())
                                 .withParameters(
-                                        new BoundedParameter("p1", 0, 3, 1)
+                                        new BoundedParameter(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR, 100, 5000, 100),
+                                        new EnumeratedParameter(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR, SUM, MULTIPLICATION)
                                 )
                                 .build()
                 )
@@ -30,6 +39,7 @@ public class Example {
                 .withScoreCalculator(new ScoreCalculatorImpl())
                 .withOutputProducer(new OutputProducerImpl())
                 .withCustomOutputFolder("C:\\Users\\Steve\\Downloads\\hashcode_output")
+                .debugMode()
                 .run();
     }
 
