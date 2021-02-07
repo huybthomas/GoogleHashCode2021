@@ -75,42 +75,20 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         preFacilitatorSetup();
         for (final Path inputFilePath : getInputFilePaths()) {
             System.out.println(format("Processing input file: ''{0}''", toFileName(inputFilePath)));
-            final T input = inputParser.parseInput(readFileContents(inputFilePath));
-            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>();
-            final long numberOfScenarios = getNumberOfScenarios();
-            long progress = 0;
+            final T input = parseInputFile(inputFilePath);
+            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(getNumberOfScenarios());
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
                 final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
                 if (algorithm instanceof BasicAlgorithm) {
-                    final BasicAlgorithm<T, U> basicAlgorithm = (BasicAlgorithm<T, U>) algorithm;
-                    final T clonedInput = input.cloneInput();
-                    final U output = basicAlgorithm.solve(clonedInput);
-                    outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
-                    final long score = scoreCalculator.calculateScore(clonedInput, output);
-                    scoreTracker.handleUpdate(score, output, basicAlgorithm.getClass());
-                    printProgressBar(++progress, numberOfScenarios);
+                    handleBasicAlgorithm(algorithm, input, scoreTracker);
                 } else if (algorithm instanceof ParameterizedAlgorithm) {
-                    final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
-                    final List<ParameterState<?>> parameterStates = algorithmSpecification.getParameters().stream()
-                            .map(this::toParameterState)
-                            .collect(Collectors.toList());
-                    final Map<String, Object> parameterPermutation = initializeParameterMap(parameterStates);
-                    for (final ParameterState<?> parameterState : parameterStates) {
-                        while (parameterState.hasNext()) {
-                            parameterizedAlgorithm.handleParameters(parameterPermutation);
-                            final T clonedInput = input.cloneInput();
-                            final U output = parameterizedAlgorithm.solve(clonedInput);
-                            outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
-                            final long score = scoreCalculator.calculateScore(clonedInput, output);
-                            scoreTracker.handleUpdate(score, output, parameterizedAlgorithm.getClass(), parameterPermutation);
-                            printProgressBar(++progress, numberOfScenarios);
-                            parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
-                        }
-                    }
+                    handleParameterizedAlgorithm(algorithm, algorithmSpecification, input, scoreTracker);
+                } else {
+                    throw new RuntimeException(format("Unexpected algorithm type: ''{0}''", simpleName(algorithm)));
                 }
             }
             scoreTracker.printReport();
-            writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
+            writeOptimalSolutionToOutputFolder(inputFilePath, scoreTracker);
         }
         writeSourcesZipToOutputFolder();
     }
@@ -126,6 +104,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 inputSpecifier == ALL_INPUT_FILES || inputFileNames.stream().anyMatch(fileName::contains));
     }
 
+    private T parseInputFile(final Path inputFilePath) {
+        return inputParser.parseInput(readFileContents(inputFilePath));
+    }
+
     private long getNumberOfScenarios() {
         long numberOfScenarios = 0;
         numberOfScenarios += algorithmSpecifications.stream()
@@ -138,6 +120,30 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                         .reduce(1, Math::multiplyExact))
                 .sum();
         return numberOfScenarios;
+    }
+
+    private void handleBasicAlgorithm(final Algorithm<T, U> algorithm, final T input, final ScoreTracker<T, U> scoreTracker) {
+        doAlgorithmIteration(input, algorithm, scoreTracker);
+    }
+
+    private void handleParameterizedAlgorithm(
+            final Algorithm<T, U> algorithm,
+            final AlgorithmSpecification<T, U> algorithmSpecification,
+            final T input,
+            final ScoreTracker<T, U> scoreTracker
+    ) {
+        final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
+        final List<ParameterState<?>> parameterStates = algorithmSpecification.getParameters().stream()
+                .map(this::toParameterState)
+                .collect(Collectors.toList());
+        final Map<String, Object> parameterPermutation = initializeParameterMap(parameterStates);
+        for (final ParameterState<?> parameterState : parameterStates) {
+            while (parameterState.hasNext()) {
+                parameterizedAlgorithm.handleParameters(parameterPermutation);
+                doAlgorithmIteration(input, parameterizedAlgorithm, parameterPermutation, scoreTracker);
+                parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
+            }
+        }
     }
 
     private ParameterState<?> toParameterState(final AlgorithmParameter parameter) {
@@ -155,21 +161,40 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 .collect(Collectors.toMap(parameterState -> parameterState.parameter.getName(), ParameterState::next));
     }
 
-    private void doAlgorithmIteration(final T input, final Algorithm<T, U> algorithm) {
+    private void doAlgorithmIteration(
+            final T input,
+            final Algorithm<T, U> algorithm,
+            final ScoreTracker<T, U> scoreTracker
+    ) {
+        doAlgorithmIteration(input, algorithm, Optional.empty(), scoreTracker);
     }
 
-    private void printProgressBar(final long currentScenarioIndex, final long totalNumberOfScenarios) {
-        final double percentualProgress = 1.0 * currentScenarioIndex / totalNumberOfScenarios;
-        final long progressBarProgress = (long) Math.floor(PROGRESS_BAR_LENGTH * percentualProgress);
-        final StringBuilder progressBar = new StringBuilder();
-        progressBar.append('[');
-        IntStream.range(0, (int) progressBarProgress).forEach(index -> progressBar.append("="));
-        IntStream.range(0, (int) (PROGRESS_BAR_LENGTH - progressBarProgress)).forEach(index -> progressBar.append(" "));
-        progressBar.append("]");
-        System.out.print(format("\r{0} {1}%", progressBar.toString(), (percentualProgress * 100)));
-        if (currentScenarioIndex == totalNumberOfScenarios) {
-            System.out.print("\n");
-        }
+    private void doAlgorithmIteration(
+            final T input,
+            final Algorithm<T, U> algorithm,
+            final Map<String, Object> parameterPermutation,
+            final ScoreTracker<T, U> scoreTracker
+    ) {
+        doAlgorithmIteration(input, algorithm, Optional.of(parameterPermutation), scoreTracker);
+    }
+
+    private void doAlgorithmIteration(
+            final T input,
+            final Algorithm<T, U> algorithm,
+            final Optional<Map<String, Object>> parameterPermutation,
+            final ScoreTracker<T, U> scoreTracker
+    ) {
+        final T clonedInput = input.cloneInput();
+        final U output = algorithm.solve(clonedInput);
+        outputValidator.ifPresent(validator -> validator.validateOutput(clonedInput, output));
+        final long score = scoreCalculator.calculateScore(clonedInput, output);
+        parameterPermutation.ifPresentOrElse(
+                permutation -> scoreTracker.handleUpdate(score, output, algorithm.getClass(), permutation),
+                () -> scoreTracker.handleUpdate(score, output, algorithm.getClass()));
+    }
+
+    private void writeOptimalSolutionToOutputFolder(final Path inputFilePath, final ScoreTracker<T, U> scoreTracker) {
+        writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
     }
 
     private void writeSourcesZipToOutputFolder() {
@@ -184,25 +209,45 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static class ScoreTracker<T extends InputModel, U extends OutputModel> {
 
+        long progress;
+        long numberOfScenarios;
         long bestScore;
         U bestOutput;
         Class<? extends Algorithm> bestAlgorithm;
         Optional<Map<String, Object>> bestAlgorithmParameters;
 
-        public ScoreTracker() {
+        public ScoreTracker(final Long numberOfScenarios) {
+            this.progress = 0;
+            this.numberOfScenarios = numberOfScenarios;
             this.bestScore = Long.MIN_VALUE;
         }
 
-        void handleUpdate(final long score, final U output, final Class<? extends BasicAlgorithm> algorithmClass) {
+        void handleUpdate(final long score, final U output, final Class<? extends Algorithm> algorithmClass) {
             handleUpdate(score, output, algorithmClass, null);
         }
 
         void handleUpdate(final long score, final U output, final Class<? extends Algorithm> algorithmClass, final Map<String, Object> parameters) {
+            progress++;
             if (score > bestScore) {
                 bestScore = score;
                 bestOutput = output;
                 bestAlgorithm = algorithmClass;
                 bestAlgorithmParameters = Optional.ofNullable(parameters);
+            }
+            printProgressBar(progress, numberOfScenarios);
+        }
+
+        private void printProgressBar(final long currentScenarioIndex, final long totalNumberOfScenarios) {
+            final double percentualProgress = 1.0 * currentScenarioIndex / totalNumberOfScenarios;
+            final long progressBarProgress = (long) Math.floor(PROGRESS_BAR_LENGTH * percentualProgress);
+            final StringBuilder progressBar = new StringBuilder();
+            progressBar.append('[');
+            IntStream.range(0, (int) progressBarProgress).forEach(index -> progressBar.append("="));
+            IntStream.range(0, (int) (PROGRESS_BAR_LENGTH - progressBarProgress)).forEach(index -> progressBar.append(" "));
+            progressBar.append("]");
+            System.out.print(format("\r{0} {1}%", progressBar.toString(), (percentualProgress * 100)));
+            if (currentScenarioIndex == totalNumberOfScenarios) {
+                System.out.print("\n");
             }
         }
 
