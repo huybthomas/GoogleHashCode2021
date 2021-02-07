@@ -17,6 +17,7 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCa
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private static final Path DEFAULT_OUTPUT_FOLDER = getFolderFromResources("output");
     private static final int PROGRESS_BAR_LENGTH = 50;
 
+    private final boolean debugMode;
     private final InputSpecifier inputSpecifier;
     private final List<String> inputFileNames;
     private final InputParser<T> inputParser;
@@ -56,6 +58,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private final Path outputFolder;
 
     private HashCodeFacilitator(final ConfigBuilder<T, U> builder) {
+        this.debugMode = builder.debugMode;
         this.inputSpecifier = builder.inputSpecifier;
         this.inputFileNames = builder.inputFileNames;
         this.inputParser = builder.inputParser;
@@ -76,7 +79,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         for (final Path inputFilePath : getInputFilePaths()) {
             System.out.println(format("Processing input file: ''{0}''", toFileName(inputFilePath)));
             final T input = parseInputFile(inputFilePath);
-            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(getNumberOfScenarios());
+            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(debugMode, getNumberOfScenarios());
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
                 final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
                 if (algorithm instanceof BasicAlgorithm) {
@@ -138,10 +141,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 .collect(Collectors.toList());
         final Map<String, Object> parameterPermutation = initializeParameterMap(parameterStates);
         for (final ParameterState<?> parameterState : parameterStates) {
+            parameterizedAlgorithm.handleParameters(parameterPermutation);
+            doAlgorithmIteration(input, parameterizedAlgorithm, parameterPermutation, scoreTracker);
             while (parameterState.hasNext()) {
+                parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
                 parameterizedAlgorithm.handleParameters(parameterPermutation);
                 doAlgorithmIteration(input, parameterizedAlgorithm, parameterPermutation, scoreTracker);
-                parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
             }
         }
     }
@@ -158,7 +163,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private Map<String, Object> initializeParameterMap(final List<ParameterState<?>> parameterStates) {
         return parameterStates.stream()
-                .collect(Collectors.toMap(parameterState -> parameterState.parameter.getName(), ParameterState::next));
+                .collect(Collectors.toMap(parameterState -> parameterState.parameter.getName(), ParameterState::current));
     }
 
     private void doAlgorithmIteration(
@@ -209,6 +214,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static class ScoreTracker<T extends InputModel, U extends OutputModel> {
 
+        boolean debugMode;
         long progress;
         long numberOfScenarios;
         long bestScore;
@@ -216,7 +222,8 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         Class<? extends Algorithm> bestAlgorithm;
         Optional<Map<String, Object>> bestAlgorithmParameters;
 
-        public ScoreTracker(final Long numberOfScenarios) {
+        public ScoreTracker(final boolean debugMode, final Long numberOfScenarios) {
+            this.debugMode = debugMode;
             this.progress = 0;
             this.numberOfScenarios = numberOfScenarios;
             this.bestScore = Long.MIN_VALUE;
@@ -232,9 +239,13 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
                 bestScore = score;
                 bestOutput = output;
                 bestAlgorithm = algorithmClass;
-                bestAlgorithmParameters = Optional.ofNullable(parameters);
+                bestAlgorithmParameters = parameters == null
+                        ? Optional.empty()
+                        : Optional.of(new HashMap<>(parameters));
             }
-            printProgressBar(progress, numberOfScenarios);
+            if (!debugMode) {
+                printProgressBar(progress, numberOfScenarios);
+            }
         }
 
         private void printProgressBar(final long currentScenarioIndex, final long totalNumberOfScenarios) {
@@ -269,6 +280,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         V parameter;
 
+        abstract Object current();
         abstract boolean hasNext();
         abstract Object next();
 
@@ -288,15 +300,19 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         }
 
         @Override
+        Object current() {
+            return value;
+        }
+
+        @Override
         boolean hasNext() {
-            return value.doubleValue() <= parameter.getUpperLimit();
+            return value.doubleValue() + parameter.getStepSize() <= parameter.getUpperLimit();
         }
 
         @Override
         Number next() {
-            final Number toReturn = value;
-            value = value.doubleValue() + parameter.getStepSize();
-            return toReturn;
+            this.value = value.doubleValue() + parameter.getStepSize();
+            return value;
         }
 
     }
@@ -311,13 +327,18 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         }
 
         @Override
+        Object current() {
+            return parameter.getValues().get(index);
+        }
+
+        @Override
         boolean hasNext() {
-            return index < parameter.getNumberOfScenarios();
+            return index + 1 < parameter.getNumberOfScenarios();
         }
 
         @Override
         Object next() {
-            return parameter.getValues().get(index++);
+            return parameter.getValues().get(++index);
         }
 
     }
@@ -328,6 +349,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static final class ConfigBuilder<T extends InputModel, U extends OutputModel> {
 
+        boolean debugMode;
         InputSpecifier inputSpecifier;
         List<String> inputFileNames;
         InputParser<T> inputParser;
@@ -468,6 +490,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         public Configurator_Final<T, U> withCustomOutputFolder(final String fullOutputFolderPath) {
             configBuilder.outputFolder = getFolder(fullOutputFolderPath);
+            return this;
+        }
+
+        public Configurator_Final<T, U> debugMode() {
+            configBuilder.debugMode = true;
             return this;
         }
 

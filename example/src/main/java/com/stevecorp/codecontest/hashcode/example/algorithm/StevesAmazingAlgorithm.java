@@ -2,7 +2,7 @@ package com.stevecorp.codecontest.hashcode.example.algorithm;
 
 import com.stevecorp.codecontest.hashcode.example.component.Input;
 import com.stevecorp.codecontest.hashcode.example.component.Output;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.BasicAlgorithm;
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.ParameterizedAlgorithm;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -16,7 +16,11 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class SteveBasicAlgorithm extends BasicAlgorithm<Input, Output> {
+public class StevesAmazingAlgorithm extends ParameterizedAlgorithm<Input, Output> {
+
+    @Override
+    public void handleParameters(final Map<String, Object> parameters) {
+    }
 
     @Override
     public Output solve(final Input input) {

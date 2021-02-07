@@ -1,7 +1,6 @@
 package com.stevecorp.codecontest.hashcode.example;
 
-import com.stevecorp.codecontest.hashcode.example.algorithm.SteveBasicAlgorithm;
-import com.stevecorp.codecontest.hashcode.example.algorithm.TestAlgorithm;
+import com.stevecorp.codecontest.hashcode.example.algorithm.StevesAmazingAlgorithm;
 import com.stevecorp.codecontest.hashcode.example.component.InputParserImpl;
 import com.stevecorp.codecontest.hashcode.example.component.OutputProducerImpl;
 import com.stevecorp.codecontest.hashcode.example.component.OutputValidatorImpl;
@@ -9,8 +8,6 @@ import com.stevecorp.codecontest.hashcode.example.component.ScoreCalculatorImpl;
 import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.BoundedParameter;
-
-import static com.stevecorp.codecontest.hashcode.example.algorithm.TestAlgorithm.PARAMETER_1_KEY;
 
 public class Example {
 
@@ -23,12 +20,10 @@ public class Example {
                 .withInputParser(new InputParserImpl())
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
-                                .basicAlgorithm(new SteveBasicAlgorithm())
-                                .build(),
-                        AlgorithmSpecification.builder()
-                                .parameterizedAlgorithm(new TestAlgorithm())
+                                .parameterizedAlgorithm(new StevesAmazingAlgorithm())
                                 .withParameters(
-                                        new BoundedParameter(PARAMETER_1_KEY, 0, 10, 1))
+                                        new BoundedParameter("p1", 0, 3, 1)
+                                )
                                 .build()
                 )
                 .withOutputValidator(new OutputValidatorImpl())

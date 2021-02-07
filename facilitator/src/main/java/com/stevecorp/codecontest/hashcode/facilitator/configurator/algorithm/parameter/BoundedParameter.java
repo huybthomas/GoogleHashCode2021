@@ -21,7 +21,7 @@ public class BoundedParameter extends AlgorithmParameter {
 
     @Override
     public long getNumberOfScenarios() {
-        return floorDiv(upperLimit - lowerLimit, stepSize);
+        return floorDiv(upperLimit - lowerLimit, stepSize) + 1;
     }
 
 }
