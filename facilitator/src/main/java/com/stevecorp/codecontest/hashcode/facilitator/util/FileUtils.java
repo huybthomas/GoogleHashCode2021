@@ -1,5 +1,7 @@
 package com.stevecorp.codecontest.hashcode.facilitator.util;
 
+import org.zeroturnaround.zip.ZipUtil;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -91,6 +93,27 @@ public class FileUtils {
         } catch (final Exception e) {
             throw new RuntimeException(format("Unable to clean the directory contents for folder: ''{0}''",
                     toFileName(folderPath)), e);
+        }
+    }
+
+    public static Path getSrcMainJavaLocationFromClass(final Class<?> clazz) {
+        try {
+            return Paths.get(clazz.getProtectionDomain().getCodeSource().getLocation().toURI())
+                    .getParent().getParent()
+                    .resolve("src/main/java");
+        } catch (final URISyntaxException e) {
+            throw new RuntimeException(format("Unable to derive the location of the src/main/java location through class ''{0}''",
+                    ClassUtils.simpleName(clazz)));
+        }
+    }
+
+    public static void zipFilesToFolder(final Path folderToZip, final Path outputFolder) {
+        try {
+            final Path outputFilePath = outputFolder.resolve("sources.zip");
+            ZipUtil.pack(folderToZip.toFile(), outputFilePath.toFile());
+        } catch (final Exception e) {
+            System.out.println(format("Unable to write sources (''{0}'') zip to output folder (''{1}'')",
+                    toFileName(folderToZip), toFileName(outputFolder)));
         }
     }
 

@@ -31,9 +31,11 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.clea
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFilePathsFromFolder;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolder;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getFolderFromResources;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.getSrcMainJavaLocationFromClass;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.readFileContents;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.toFileName;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.writeToFile;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.zipFilesToFolder;
 import static java.text.MessageFormat.format;
 
 @SuppressWarnings({ "unused, unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
@@ -110,6 +112,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             scoreTracker.printReport();
             writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
         }
+        writeSourcesZipToOutputFolder();
     }
 
     private void preFacilitatorSetup() {
@@ -167,6 +170,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         if (currentScenarioIndex == totalNumberOfScenarios) {
             System.out.print("\n");
         }
+    }
+
+    private void writeSourcesZipToOutputFolder() {
+        final Class<?> algorithmClass = algorithmSpecifications.get(0).getAlgorithm().getClass();
+        final Path srcMainJavaPath = getSrcMainJavaLocationFromClass(algorithmClass);
+        zipFilesToFolder(srcMainJavaPath, outputFolder);
     }
 
     /**************************************************************************************************************

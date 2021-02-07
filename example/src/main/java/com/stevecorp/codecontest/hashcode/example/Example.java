@@ -28,7 +28,7 @@ public class Example {
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(new TestAlgorithm())
                                 .withParameters(
-                                        new BoundedParameter(PARAMETER_1_KEY, 0, 1000, 1))
+                                        new BoundedParameter(PARAMETER_1_KEY, 0, 10, 1))
                                 .build()
                 )
                 .withOutputValidator(new OutputValidatorImpl())
