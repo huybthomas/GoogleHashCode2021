@@ -17,7 +17,6 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.score.ScoreCa
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,12 +37,14 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.toFi
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.writeToFile;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.zipFilesToFolder;
 import static java.text.MessageFormat.format;
+import static java.util.Comparator.comparingLong;
 
 @SuppressWarnings({ "unused, unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
 public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private static final Path DEFAULT_INPUT_FOLDER = getFolderFromResources("input");
     private static final Path DEFAULT_OUTPUT_FOLDER = getFolderFromResources("output");
+    private static final int DEFAULT_NUMBER_OF_SUBOPTIMAL_SOLUTIONS_TO_SHOW = 4;
     private static final int PROGRESS_BAR_LENGTH = 50;
 
     private final boolean debugMode;
@@ -56,6 +57,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private final OutputProducer<U> outputProducer;
     private final Path inputFolder;
     private final Path outputFolder;
+    private final int numberOfSuboptimalSolutionsToShow;
 
     private HashCodeFacilitator(final ConfigBuilder<T, U> builder) {
         this.debugMode = builder.debugMode;
@@ -68,6 +70,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         this.outputProducer = builder.outputProducer;
         this.inputFolder = builder.inputFolder != null ? builder.inputFolder : DEFAULT_INPUT_FOLDER;
         this.outputFolder = builder.outputFolder != null ? builder.outputFolder : DEFAULT_OUTPUT_FOLDER;
+        this.numberOfSuboptimalSolutionsToShow = builder.numberOfSuboptimalSolutionsToShow;
     }
 
     public static Configurator_InputSpecifier<?, ?> configurator() {
@@ -79,7 +82,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         for (final Path inputFilePath : getInputFilePaths()) {
             System.out.println(format("Processing input file: ''{0}''", toFileName(inputFilePath)));
             final T input = parseInputFile(inputFilePath);
-            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(debugMode, getNumberOfScenarios());
+            final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(debugMode, getNumberOfScenarios(), numberOfSuboptimalSolutionsToShow);
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
                 final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
                 if (algorithm instanceof BasicAlgorithm) {
@@ -192,7 +195,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     }
 
     private void writeOptimalSolutionToOutputFolder(final Path inputFilePath, final ScoreTracker<T, U> scoreTracker) {
-        writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput(scoreTracker.bestOutput));
+        writeToFile(outputFolder, inputFilePath, outputProducer.produceOutput((U) scoreTracker.getBestOutput().output));
     }
 
     private void writeSourcesZipToOutputFolder() {
@@ -209,18 +212,16 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         final boolean debugMode;
         final long numberOfScenarios;
+        final long numberOfResultsToShow;
 
         long progress;
-        long bestScore;
-        U bestOutput;
-        Class<? extends Algorithm> bestAlgorithm;
-        Optional<Map<String, Object>> bestAlgorithmParameters;
+        final List<ScoreTracker_Element> outputs = new ArrayList<>();
 
-        ScoreTracker(final boolean debugMode, final Long numberOfScenarios) {
+        ScoreTracker(final boolean debugMode, final Long numberOfScenarios, final int numberOfSuboptimalSolutionsToShow) {
             this.debugMode = debugMode;
             this.numberOfScenarios = numberOfScenarios;
+            this.numberOfResultsToShow = numberOfSuboptimalSolutionsToShow + 1;
             this.progress = 0;
-            this.bestScore = Long.MIN_VALUE;
         }
 
         void handleUpdate(final long score, final U output, final Class<? extends Algorithm> algorithmClass) {
@@ -229,13 +230,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         void handleUpdate(final long score, final U output, final Class<? extends Algorithm> algorithmClass, final Map<String, Object> parameters) {
             progress++;
-            if (score > bestScore) {
-                bestScore = score;
-                bestOutput = output;
-                bestAlgorithm = algorithmClass;
-                bestAlgorithmParameters = parameters == null
-                        ? Optional.empty()
-                        : Optional.of(new HashMap<>(parameters));
+            if (outputs.size() < numberOfResultsToShow) {
+                outputs.add(new ScoreTracker_Element(score, output, algorithmClass, parameters));
+                outputs.sort(comparingLong(ScoreTracker_Element::getScore));
+            } else if (score > outputs.get(0).score) {
+                outputs.set(0, new ScoreTracker_Element(score, output, algorithmClass, parameters));
+                outputs.sort(comparingLong(ScoreTracker_Element::getScore));
             }
             if (!debugMode) {
                 printProgressBar(progress, numberOfScenarios);
@@ -261,11 +261,52 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         }
 
         void printReport() {
-            System.out.println("Optimal solution for input:");
-            System.out.println(format("\tAlgorithm: {0}", simpleName(bestAlgorithm)));
-            System.out.println(format("\tScore: {0}", bestScore));
-            bestAlgorithmParameters.ifPresent(stringObjectMap -> System.out.println(format("\tParameters: {0}", stringObjectMap)));
+            System.out.println("Optimal solution:");
+            printReportPart(getBestOutput(), false);
+            if (numberOfResultsToShow > 1) {
+                System.out.println("Suboptimal solutions:");
+                IntStream.range(0, outputs.size() - 1)
+                        .map(index -> outputs.size() - 2 - index)
+                        .forEach(index -> printReportPart(outputs.get(index), index != 0));
+            }
             System.out.print("\n");
+        }
+
+        private void printReportPart(final ScoreTracker_Element<U> output, final boolean printSeparator) {
+            System.out.println(format("\tAlgorithm: {0}", simpleName(output.algorithm)));
+            System.out.println(format("\tScore: {0}", output.score));
+            output.parameters.ifPresent(stringObjectMap -> System.out.println(format("\tParameters: {0}", stringObjectMap)));
+            if (printSeparator) {
+                System.out.println("\t------------------");
+            }
+        }
+
+        ScoreTracker_Element getBestOutput() {
+            return outputs.get(outputs.size() - 1);
+        }
+
+    }
+
+    public static final class ScoreTracker_Element<U extends OutputModel> {
+
+        final long score;
+        final U output;
+        final Class<? extends Algorithm> algorithm;
+        final Optional<Map<String, Object>> parameters;
+
+        public ScoreTracker_Element(
+                final long score,
+                final U output,
+                final Class<? extends Algorithm> algorithm,
+                final Map<String, Object> parameters) {
+            this.score = score;
+            this.output = output;
+            this.algorithm = algorithm;
+            this.parameters = Optional.ofNullable(parameters);
+        }
+
+        long getScore() {
+            return score;
         }
 
     }
@@ -431,6 +472,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         OutputProducer<U> outputProducer;
         Path inputFolder;
         Path outputFolder;
+        int numberOfSuboptimalSolutionsToShow;
 
         private ConfigBuilder() {}
 
@@ -567,6 +609,15 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
         public Configurator_Final<T, U> debugMode() {
             configBuilder.debugMode = true;
+            return this;
+        }
+
+        public Configurator_Final<T, U> showSuboptimalSolutions() {
+            return showSuboptimalSolutions(DEFAULT_NUMBER_OF_SUBOPTIMAL_SOLUTIONS_TO_SHOW);
+        }
+
+        public Configurator_Final<T, U> showSuboptimalSolutions(final int numberOfSuboptimalSolutionsToShow) {
+            configBuilder.numberOfSuboptimalSolutionsToShow = numberOfSuboptimalSolutionsToShow;
             return this;
         }
 
