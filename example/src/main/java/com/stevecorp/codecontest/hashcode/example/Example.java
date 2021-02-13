@@ -19,12 +19,7 @@ public class Example {
 
     public static void main(final String... args) {
         HashCodeFacilitator.configurator()
-//                .forAllInputFiles()
-//                .forSelectedInputFiles(
-//                        "many_pizzas",
-//                        "many_teams"
-//                )
-                .forASingleInputFile("example")
+                .forAllInputFiles()
                 .withInputParser(new InputParserImpl())
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
@@ -38,8 +33,6 @@ public class Example {
                 .withOutputValidator(new OutputValidatorImpl())
                 .withScoreCalculator(new ScoreCalculatorImpl())
                 .withOutputProducer(new OutputProducerImpl())
-                .withCustomOutputFolder("C:\\Users\\Steve\\Downloads\\hashcode_output")
-                .debugMode()
                 .run();
     }
 

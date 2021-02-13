@@ -31,7 +31,6 @@ public class StevesAmazingAlgorithm extends ParameterizedAlgorithm<Input, Output
     public void handleParameters(final Map<String, Object> parameters) {
         this.ingredientPunishmentFactor = (long) parameters.get(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR);
         this.pizzaIngredientScoreOperation = (PizzaIngredientScoreOperation) parameters.get(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR);
-        System.out.println(ingredientPunishmentFactor + " - " + pizzaIngredientScoreOperation);
     }
 
     @Override

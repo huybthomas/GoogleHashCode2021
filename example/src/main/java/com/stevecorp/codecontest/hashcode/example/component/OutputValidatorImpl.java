@@ -20,7 +20,7 @@ public class OutputValidatorImpl implements OutputValidator<Input, Output> {
         final Set<Integer> uniquePizzas = new HashSet<>();
         for (final Output.Delivery delivery : output.deliveries) {
             if (delivery.teamSize != delivery.pizzaIds.size()) {
-                throw new OutputValidationException(format("Expected {0} pizzas for a team with size {1}",
+                throw new OutputValidationException(format("Expected {0} pizzas for a team with size {0}, got: {1}",
                         delivery.teamSize, delivery.pizzaIds.size()));
             }
             for (final Integer pizzaId : delivery.pizzaIds) {

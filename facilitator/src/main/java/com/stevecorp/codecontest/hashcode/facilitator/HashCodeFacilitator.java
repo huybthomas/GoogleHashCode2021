@@ -136,18 +136,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             final ScoreTracker<T, U> scoreTracker
     ) {
         final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
-        final List<ParameterState<?>> parameterStates = algorithmSpecification.getParameters().stream()
-                .map(this::toParameterState)
-                .collect(Collectors.toList());
-        final Map<String, Object> parameterPermutation = initializeParameterMap(parameterStates);
-        for (final ParameterState<?> parameterState : parameterStates) {
-            parameterizedAlgorithm.handleParameters(parameterPermutation);
-            doAlgorithmIteration(input, parameterizedAlgorithm, parameterPermutation, scoreTracker);
-            while (parameterState.hasNext()) {
-                parameterPermutation.put(parameterState.parameter.getName(), parameterState.next());
-                parameterizedAlgorithm.handleParameters(parameterPermutation);
-                doAlgorithmIteration(input, parameterizedAlgorithm, parameterPermutation, scoreTracker);
-            }
+        final ParameterStreamer parameterStreamer = new ParameterStreamer(algorithmSpecification.getParameters());
+        while (parameterStreamer.hasNext()) {
+            final Map<String, Object> iterationParameters = parameterStreamer.next();
+            parameterizedAlgorithm.handleParameters(iterationParameters);
+            doAlgorithmIteration(input, parameterizedAlgorithm, iterationParameters, scoreTracker);
         }
     }
 
@@ -214,18 +207,19 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static class ScoreTracker<T extends InputModel, U extends OutputModel> {
 
-        boolean debugMode;
+        final boolean debugMode;
+        final long numberOfScenarios;
+
         long progress;
-        long numberOfScenarios;
         long bestScore;
         U bestOutput;
         Class<? extends Algorithm> bestAlgorithm;
         Optional<Map<String, Object>> bestAlgorithmParameters;
 
-        public ScoreTracker(final boolean debugMode, final Long numberOfScenarios) {
+        ScoreTracker(final boolean debugMode, final Long numberOfScenarios) {
             this.debugMode = debugMode;
-            this.progress = 0;
             this.numberOfScenarios = numberOfScenarios;
+            this.progress = 0;
             this.bestScore = Long.MIN_VALUE;
         }
 
@@ -276,13 +270,81 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
      ***   Classes for parameter permutation streaming                                                          ***
      **************************************************************************************************************/
 
+    public static final class ParameterStreamer {
+
+        final List<ParameterState<? extends AlgorithmParameter>> parameterStates;
+        final long numberOfScenarios;
+        long scenarioIndex;
+
+        ParameterStreamer(final List<AlgorithmParameter> parameters) {
+            this.parameterStates = parameters.stream()
+                    .map(this::toParameterState)
+                    .collect(Collectors.toList());
+            this.numberOfScenarios = getNumberOfScenarios(parameters);
+            this.scenarioIndex = 0;
+        }
+
+        boolean hasNext() {
+            return scenarioIndex < numberOfScenarios;
+        }
+
+        Map<String, Object> next() {
+            if (scenarioIndex == 0) {
+                initState();
+            } else {
+                nextState();
+            }
+            scenarioIndex++;
+            return getParameters();
+        }
+
+        private long getNumberOfScenarios(final List<AlgorithmParameter> parameters) {
+            return parameters.stream()
+                    .mapToLong(AlgorithmParameter::getNumberOfScenarios)
+                    .reduce(1, Math::multiplyExact);
+        }
+
+        private void initState() {
+            parameterStates.forEach(ParameterState::reset);
+        }
+
+        private void nextState() {
+            final ParameterState<?> parameterState = parameterStates.stream()
+                    .filter(ParameterState::hasNext)
+                    .findFirst().orElseThrow(() -> new RuntimeException("Could not find a parameter state with flag hasNext == true"));
+            final int parameterStateIndex = parameterStates.indexOf(parameterState);
+            parameterState.next();
+            IntStream.range(0, parameterStateIndex)
+                    .forEach(index -> parameterStates.get(index).reset());
+        }
+
+        private Map<String, Object> getParameters() {
+            return parameterStates.stream()
+                    .collect(Collectors.toMap(
+                            parameterState -> parameterState.parameter.getName(),
+                            ParameterState::current));
+        }
+
+        private ParameterState<? extends AlgorithmParameter> toParameterState(final AlgorithmParameter parameter) {
+            if (parameter instanceof BoundedParameter) {
+                return new ParameterState_Bounded((BoundedParameter) parameter);
+            }
+            if (parameter instanceof EnumeratedParameter) {
+                return new ParameterState_Enumerated((EnumeratedParameter) parameter);
+            }
+            throw new RuntimeException(format("Unsupported algorithm parameter type: ''{}''", simpleName(parameter)));
+        }
+
+    }
+
     public static abstract class ParameterState<V extends AlgorithmParameter>  {
 
-        V parameter;
+        final V parameter;
 
-        abstract Object current();
+        abstract void reset();
         abstract boolean hasNext();
-        abstract Object next();
+        abstract void next();
+        abstract Object current();
 
         public ParameterState(final V parameter) {
             this.parameter = parameter;
@@ -292,16 +354,15 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static final class ParameterState_Bounded extends ParameterState<BoundedParameter>  {
 
-        long value;
+        Long value;
 
         public ParameterState_Bounded(final BoundedParameter parameter) {
             super(parameter);
-            this.value = parameter.getLowerLimit();
         }
 
         @Override
-        Object current() {
-            return value;
+        void reset() {
+            this.value = parameter.getLowerLimit();
         }
 
         @Override
@@ -310,8 +371,12 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         }
 
         @Override
-        Number next() {
-            this.value = value + parameter.getStepSize();
+        void next() {
+            value += parameter.getStepSize();
+        }
+
+        @Override
+        Number current() {
             return value;
         }
 
@@ -319,16 +384,15 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     public static final class ParameterState_Enumerated extends ParameterState<EnumeratedParameter> {
 
-        int index;
+        Integer index;
 
         public ParameterState_Enumerated(final EnumeratedParameter parameter) {
             super(parameter);
-            this.index = 0;
         }
 
         @Override
-        Object current() {
-            return parameter.getValues().get(index);
+        void reset() {
+            this.index = 0;
         }
 
         @Override
@@ -337,10 +401,14 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         }
 
         @Override
-        Object next() {
-            return parameter.getValues().get(++index);
+        void next() {
+            ++index;
         }
 
+        @Override
+        Object current() {
+            return parameter.getValues().get(index);
+        }
     }
 
     /**************************************************************************************************************
