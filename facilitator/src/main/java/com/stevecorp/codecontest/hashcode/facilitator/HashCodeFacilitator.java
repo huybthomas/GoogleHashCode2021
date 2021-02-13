@@ -250,7 +250,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             IntStream.range(0, (int) progressBarProgress).forEach(index -> progressBar.append("="));
             IntStream.range(0, (int) (PROGRESS_BAR_LENGTH - progressBarProgress)).forEach(index -> progressBar.append(" "));
             progressBar.append("]");
-            System.out.print(format("\r{0} {1}%", progressBar.toString(), (percentualProgress * 100)));
+            System.out.print(format("\r{0} {1}%",
+                    progressBar.toString(), percentualProgress * 100));
+            if (currentScenarioIndex < totalNumberOfScenarios) {
+                System.out.print(format(" ({0}/{1})", currentScenarioIndex, numberOfScenarios));
+            }
             if (currentScenarioIndex == totalNumberOfScenarios) {
                 System.out.print("\n");
             }
