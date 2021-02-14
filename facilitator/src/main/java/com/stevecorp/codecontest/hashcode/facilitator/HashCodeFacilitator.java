@@ -490,18 +490,49 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configBuilder;
         }
 
+        /**
+         * Run your algorithm(s) on all the available input files.
+         *
+         * By default, input files are scanned in the src/main/resource/input folder, but this can be customized with
+         *  the optional withCustomInputFolder(String inputFolderPath) builder method.
+         */
         public Configurator_InputParser<T, U> forAllInputFiles() {
             configBuilder.inputSpecifier = ALL_INPUT_FILES;
             configBuilder.inputFileNames = new ArrayList<>();
             return new Configurator_InputParser<>(this);
         }
 
+        /**
+         * Run your algorithm(s) on a single input file.
+         *
+         * By default, input files are scanned in the src/main/resource/input folder, but this can be customized with
+         *  the optional withCustomInputFolder(String inputFolderPath) builder method.
+         *
+         * Note: This builder method supports smart file name arguments. e.g. if you input file is called
+         *  "example_input.in", you can simply pass the "example" string to this method (note that if this string
+         *  occurs more than once, all matching input files are selected).
+         *
+         *  @param inputFileName the (smart) input file name
+         */
         public Configurator_InputParser<T, U> forASingleInputFile(final String inputFileName) {
             configBuilder.inputSpecifier = SELECTED_INPUT_FILES;
             configBuilder.inputFileNames = List.of(inputFileName);
             return new Configurator_InputParser<>(this);
         }
 
+        /**
+         * Run your algorithm(s) on selected input files.
+         *
+         * By default, input files are scanned in the src/main/resource/input folder, but this can be customized with
+         *  the optional withCustomInputFolder(String inputFolderPath) builder method.
+         *
+         * Note: This builder method supports smart file name arguments. e.g. if you input file is called
+         *  "example_input.in", you can simply pass the "example" string to this method (note that if this string
+         *  occurs more than once, all matching input files are selected).
+         *
+         *  @param inputFileName the (smart) input file name
+         *  @param additionalInputFileNames additional (smart) input file names
+         */
         public Configurator_InputParser<T, U> forSelectedInputFiles(final String inputFileName, final String... additionalInputFileNames) {
             configBuilder.inputSpecifier = SELECTED_INPUT_FILES;
             configBuilder.inputFileNames = join(inputFileName, additionalInputFileNames);
@@ -518,6 +549,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
+        /**
+         * The component that will transform the file input to the specified POJO for easier processing.
+         *
+         * @param inputParser reference to a class that implements the InputParser interface
+         */
         public Configurator_Algorithm<T, U> withInputParser(final InputParser inputParser) {
             configBuilder.inputParser = inputParser;
             return new Configurator_Algorithm<>(this);
@@ -597,13 +633,13 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configBuilder.configBuilder;
         }
 
-        public Configurator_Final<T, U> withCustomInputFolder(final String fullInputFolderPath) {
-            configBuilder.inputFolder = getFolder(fullInputFolderPath);
+        public Configurator_Final<T, U> withCustomInputFolder(final String inputFolderPath) {
+            configBuilder.inputFolder = getFolder(inputFolderPath);
             return this;
         }
 
-        public Configurator_Final<T, U> withCustomOutputFolder(final String fullOutputFolderPath) {
-            configBuilder.outputFolder = getFolder(fullOutputFolderPath);
+        public Configurator_Final<T, U> withCustomOutputFolder(final String outputFolderPath) {
+            configBuilder.outputFolder = getFolder(outputFolderPath);
             return this;
         }
 
