@@ -6,6 +6,11 @@ import lombok.Getter;
 
 import java.util.List;
 
+/**
+ * Parameter of type: Enumerated
+ *
+ * This type of parameter is defined by a specified amount of parameters.
+ */
 @Getter
 public class EnumeratedParameter extends AlgorithmParameter {
 

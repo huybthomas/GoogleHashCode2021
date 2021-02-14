@@ -57,12 +57,27 @@ public class AlgorithmSpecification<T extends InputModel, U extends OutputModel>
             this.builder = builder;
         }
 
+        /**
+         * Define a basic algorithm.
+         *
+         * An algorithm that receives the input and creates the output - once per input file.
+         *
+         * @param algorithm an instance of the desired basic algorithm
+         */
         public Specification_BasicAlgorithm_Final<T, U> basicAlgorithm(BasicAlgorithm algorithm) {
             builder.algorithm = algorithm;
             builder.algorithmType = DEFAULT;
             return new Specification_BasicAlgorithm_Final<>(this);
         }
 
+        /**
+         * Define a parameterized algorithm.
+         *
+         * An algorithm that receives the input and creates the output - for every possible combination of provided
+         *  parameter ranges for every input file.
+         *
+         * @param algorithm an instance of the desired parameterized algorithm
+         */
         public Specification_ParameterizedAlgorithm_Parameter<T, U> parameterizedAlgorithm(ParameterizedAlgorithm algorithm) {
             builder.algorithm = algorithm;
             builder.algorithmType = PARAMETERIZED;
@@ -93,6 +108,16 @@ public class AlgorithmSpecification<T extends InputModel, U extends OutputModel>
             this.builder = specification.builder;
         }
 
+        /**
+         * Defines parameters for the parameterized algorithm.
+         *
+         * These parameters are instances of classes extending the AlgorithmParameter class. Options are:
+         *  - BoundedParameter: a parameter defined by a lower and upper limit, and a step size
+         *  - EnumeratedParameter: a parameter defined by distinct values.
+         *
+         * @param parameter the parameterized algorithm parameter
+         * @param additionalParameters additional parameterized algorithm parameters
+         */
         public Specification_ParameterizedAlgorithm_Final<T, U> withParameters(final AlgorithmParameter parameter, final AlgorithmParameter... additionalParameters) {
             builder.parameters = join(parameter, additionalParameters);
             return new Specification_ParameterizedAlgorithm_Final<>(this);

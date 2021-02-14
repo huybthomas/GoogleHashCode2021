@@ -552,7 +552,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         /**
          * The component that will transform the file input to the specified POJO for easier processing.
          *
-         * @param inputParser reference to a class that implements the InputParser interface
+         * @param inputParser an InputParser instance
          */
         public Configurator_Algorithm<T, U> withInputParser(final InputParser inputParser) {
             configBuilder.inputParser = inputParser;
@@ -569,6 +569,14 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
+        /**
+         * The algorithms you want to run the input on.
+         *
+         * Algorithms are specified using the AlgorithmSpecification.builder() builder. Simply follow the builder chain.
+         *
+         * @param algorithmSpecifications algorithm specification for the facilitator
+         * @param additionalAlgorithmSpecifications additional algorithm specifications for the facilitator
+         */
         public Configurator_OutputValidator<T, U> withAlgorithms(final AlgorithmSpecification algorithmSpecifications, final AlgorithmSpecification... additionalAlgorithmSpecifications) {
             configBuilder.algorithmSpecifications = join(algorithmSpecifications, additionalAlgorithmSpecifications);
             return new Configurator_OutputValidator<>(this);
@@ -584,10 +592,21 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
+        /**
+         * Signals the absence of any kind of output validation.
+         */
         public Configurator_ScoreCalculator<T, U> withoutOutputValidation() {
             return new Configurator_ScoreCalculator<>(this);
         }
 
+        /**
+         * The validator that will validate the algorithm output.
+         *
+         * In case the output is invalid, an exception will be thrown and the entire run (for all input files)
+         *  considered invalid.
+         *
+         * @param outputValidator an OutputValidator instance
+         */
         public Configurator_ScoreCalculator<T, U> withOutputValidator(final OutputValidator outputValidator) {
             configBuilder.outputValidator = outputValidator;
             return new Configurator_ScoreCalculator<>(this);
@@ -603,6 +622,13 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
+        /**
+         * The calculator that calculates the score for every algorithm output.
+         *
+         * This calculator is used to select the best possible solution for every algorithm.
+         *
+         * @param scoreCalculator a ScoreCalculator instance
+         */
         public Configurator_OutputProducer<T, U> withScoreCalculator(final ScoreCalculator scoreCalculator) {
             configBuilder.scoreCalculator = scoreCalculator;
             return new Configurator_OutputProducer<>(this);
@@ -618,6 +644,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configurator.configBuilder;
         }
 
+        /**
+         * The output producer that converts the algorithm output to the suitable output for a submission.
+         *
+         * @param outputProducer an OutputProducer instance
+         */
         public Configurator_Final<T, U> withOutputProducer(final OutputProducer outputProducer) {
             configBuilder.outputProducer = outputProducer;
             return new Configurator_Final<>(this);
@@ -633,25 +664,49 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             this.configBuilder = configBuilder.configBuilder;
         }
 
+        /**
+         * Designates a custom input folder where the facilitator will look for input files.
+         *
+         * @param inputFolderPath the file path to the input folder
+         */
         public Configurator_Final<T, U> withCustomInputFolder(final String inputFolderPath) {
             configBuilder.inputFolder = getFolder(inputFolderPath);
             return this;
         }
 
+        /**
+         * Designated a custom output folder where the generated output and sources zip will be written to.
+         *
+         * @param outputFolderPath the file path to the output folder
+         */
         public Configurator_Final<T, U> withCustomOutputFolder(final String outputFolderPath) {
             configBuilder.outputFolder = getFolder(outputFolderPath);
             return this;
         }
 
+        /**
+         * Signals debug mode - where most facilitator logging will be disabled.
+         *
+         * Since the progress bar can be a nuisance while debugging an algorithm, this method enables you to disable
+         *  facilitator logging such as the progess bar.
+         */
         public Configurator_Final<T, U> debugMode() {
             configBuilder.debugMode = true;
             return this;
         }
 
+        /**
+         * Signals that we don't only want to know the optimal solutions, but the #DEFAULT_NUMBER_OF_SUBOPTIMAL_SOLUTIONS_TO_SHOW
+         *  best solutions per input file.
+         */
         public Configurator_Final<T, U> showSuboptimalSolutions() {
             return showSuboptimalSolutions(DEFAULT_NUMBER_OF_SUBOPTIMAL_SOLUTIONS_TO_SHOW);
         }
 
+        /**
+         * Signals that we don't only want to know the optimal solutions, but the #numberOfSuboptimalSolutionsToShow
+         *  best solutions per input file.
+         */
         public Configurator_Final<T, U> showSuboptimalSolutions(final int numberOfSuboptimalSolutionsToShow) {
             configBuilder.numberOfSuboptimalSolutionsToShow = numberOfSuboptimalSolutionsToShow;
             return this;

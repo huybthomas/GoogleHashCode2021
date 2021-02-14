@@ -19,3 +19,5 @@ public class Example {
 ```
 
 From that point on you will need to define components in a specific order that will be used in the facilitator. For more information on how to implement these components, see the documentation in the code.
+
+For an example of an implemented facilitator flow, check the example module in this project.

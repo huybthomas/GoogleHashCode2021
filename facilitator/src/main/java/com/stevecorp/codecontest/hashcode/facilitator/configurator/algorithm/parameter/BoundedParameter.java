@@ -5,6 +5,11 @@ import lombok.Getter;
 
 import static java.lang.Math.floorDiv;
 
+/**
+ * Parameter of type: Bounded
+ *
+ * This type of parameter is defined by a lower and upper bound, and a step size.
+ */
 @Getter
 public class BoundedParameter extends AlgorithmParameter {
 
