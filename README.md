@@ -4,7 +4,7 @@ Hashcode facilitator is a project aimed at improving the workflow and efficiency
 
 ## How to use
 
-The HashCode Facilitator is used through the exposed builder interface. To start building your facilitator, simply get a configurator from _**HashCodeFacilitator.configurator()**_, like:
+The HashCode Facilitator is used through the exposed builder interface. To start building your facilitator, simply get a configurator from _**HashCodeFacilitator.configurator()**_ like:
 
 ```java
 import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
@@ -20,4 +20,4 @@ public class Example {
 
 From that point on you will need to define components in a specific order that will be used in the facilitator. For more information on how to implement these components, see the documentation in the code.
 
-For an example of an implemented facilitator flow, check the example module in this project.
+For an example of an implemented facilitator flow, check the **example** module in this project.
