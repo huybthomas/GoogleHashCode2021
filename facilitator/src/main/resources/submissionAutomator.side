@@ -1,0 +1,159 @@
+{
+  "id": "cc8b16d4-afa4-4b38-9835-c7a3b68b9199",
+  "version": "2.0",
+  "name": "Hash code",
+  "url": "https://hashcodejudge.withgoogle.com/#/rounds/5751229732880384/submissions/",
+  "tests": [{
+    "id": "6b246a00-34bd-4471-a070-d5138051cdbe",
+    "name": "Upload",
+    "commands": [{
+      "id": "6f5811ed-76b7-4477-8c85-ea989ae9bf26",
+      "comment": "",
+      "command": "open",
+      "target": "https://hashcodejudge.withgoogle.com/#/rounds/5751229732880384/submissions/",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d2b88298-ae0d-477c-aa2a-a1ac14c028b7",
+      "comment": "",
+      "command": "click",
+      "target": "css=div:nth-child(3) > .md-primary",
+      "targets": [
+        ["css=div:nth-child(3) > .md-primary", "css:finder"],
+        ["xpath=(//button[@type='button'])[16]", "xpath:attributes"],
+        ["xpath=//md-card-header/div/button", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "3135611a-4ad5-4e9f-8ef8-2bda81d24bd5",
+      "comment": "",
+      "command": "click",
+      "target": "css=.md-focused",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "c06009d9-3ce8-4f91-85bb-12155e850475",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_4",
+      "targets": [
+        ["id=input_4", "id"],
+        ["css=#input_4", "css:finder"],
+        ["xpath=//input[@id='input_4']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\source.zip"
+    }, {
+      "id": "2ed2d701-f14e-4656-9a5b-a1717fb68c71",
+      "comment": "",
+      "command": "click",
+      "target": "css=.ng-scope:nth-child(6) .md-raised",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "5d73b482-bc65-4e46-a145-26b1102bde31",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_10",
+      "targets": [
+        ["id=input_10", "id"],
+        ["css=#input_10", "css:finder"],
+        ["xpath=//input[@id='input_10']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list[2]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//md-list[2]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\a_example.out"
+    }, {
+      "id": "6bbc98da-dd4b-4397-9482-d0e5e1b77df2",
+      "comment": "",
+      "command": "click",
+      "target": "css=.ng-scope:nth-child(7) .md-raised",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "03838216-4d8b-44d3-8a72-f3e16513906a",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_11",
+      "targets": [
+        ["id=input_11", "id"],
+        ["css=#input_11", "css:finder"],
+        ["xpath=//input[@id='input_11']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list[3]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//md-list[3]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\b_little_bit_of_everything.out"
+    }, {
+      "id": "0c0ae582-af4c-4dc4-a0b3-509069d477b2",
+      "comment": "",
+      "command": "click",
+      "target": "css=.ng-scope:nth-child(8) .md-raised",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "a88fb8e2-b4b1-4de9-abdd-8d2009678c56",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_12",
+      "targets": [
+        ["id=input_12", "id"],
+        ["css=#input_12", "css:finder"],
+        ["xpath=//input[@id='input_12']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list[4]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//md-list[4]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\c_many_ingredients.out"
+    }, {
+      "id": "57b284da-e06e-450e-a232-f236b07720a6",
+      "comment": "",
+      "command": "click",
+      "target": "css=.ng-scope:nth-child(9) .md-raised",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "809591fa-369b-4526-b344-b26df3a0d259",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_13",
+      "targets": [
+        ["id=input_13", "id"],
+        ["css=#input_13", "css:finder"],
+        ["xpath=//input[@id='input_13']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list[5]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//md-list[5]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\d_many_pizzas.out"
+    }, {
+      "id": "5e70ddea-4bc6-4df4-bae9-5196e5801c61",
+      "comment": "",
+      "command": "click",
+      "target": "css=.ng-scope:nth-child(10) .md-raised",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "1228e9a9-8bd8-41a9-ba01-23e35fdfacd0",
+      "comment": "",
+      "command": "type",
+      "target": "id=input_14",
+      "targets": [
+        ["id=input_14", "id"],
+        ["css=#input_14", "css:finder"],
+        ["xpath=//input[@id='input_14']", "xpath:attributes"],
+        ["xpath=//md-dialog-content[@id='dialogContent_15']/div/div/md-list[6]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:idRelative"],
+        ["xpath=//md-list[6]/md-list-item/div[2]/judge-upload/div/md-input-container/div[2]/div/input", "xpath:position"]
+      ],
+      "value": "C:\\Users\\Thomas\\IdeaProjects\\hashcode-facilitator\\output\\e_many_teams.out"
+    }]
+  }],
+  "suites": [{
+    "id": "437b949e-095e-42ce-8334-138321a50024",
+    "name": "Default Suite",
+    "persistSession": false,
+    "parallel": false,
+    "timeout": 300,
+    "tests": ["6b246a00-34bd-4471-a070-d5138051cdbe"]
+  }],
+  "urls": ["https://hashcodejudge.withgoogle.com/#/rounds/5751229732880384/submissions/"],
+  "plugins": []
+}
