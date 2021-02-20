@@ -40,7 +40,7 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.zipF
 import static java.text.MessageFormat.format;
 import static java.util.Comparator.comparingLong;
 
-@SuppressWarnings({ "unused, unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
+@SuppressWarnings({ "unused", "unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
 public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private static final Path DEFAULT_INPUT_FOLDER = getFolderFromResources("input");
@@ -85,13 +85,13 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             final T input = parseInputFile(inputFilePath);
             final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(debugMode, getNumberOfScenarios(), numberOfSuboptimalSolutionsToShow);
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
-                final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
-                if (algorithm instanceof BasicAlgorithm) {
-                    handleBasicAlgorithm(algorithm, input, scoreTracker);
-                } else if (algorithm instanceof ParameterizedAlgorithm) {
-                    handleParameterizedAlgorithm(algorithm, algorithmSpecification, input, scoreTracker);
+                final Class<? extends Algorithm> algorithmClass = algorithmSpecification.getAlgorithmClass();
+                if (algorithmClass.getSuperclass() == BasicAlgorithm.class) {
+                    handleBasicAlgorithm(algorithmClass, input, scoreTracker);
+                } else if (algorithmClass.getSuperclass() == ParameterizedAlgorithm.class) {
+                    handleParameterizedAlgorithm(algorithmClass, algorithmSpecification, input, scoreTracker);
                 } else {
-                    throw new RuntimeException(format("Unexpected algorithm type: ''{0}''", simpleName(algorithm)));
+                    throw new RuntimeException(format("Unexpected algorithm type: ''{0}''", simpleName(algorithmClass)));
                 }
             }
             scoreTracker.printReport();
@@ -118,10 +118,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private long getNumberOfScenarios() {
         long numberOfScenarios = 0;
         numberOfScenarios += algorithmSpecifications.stream()
-                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithm() instanceof BasicAlgorithm)
+                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithmClass().getSuperclass() == BasicAlgorithm.class)
                 .count();
         numberOfScenarios += algorithmSpecifications.stream()
-                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithm() instanceof ParameterizedAlgorithm)
+                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithmClass().getSuperclass() == ParameterizedAlgorithm.class)
                 .mapToLong(algorithmSpecification -> algorithmSpecification.getParameters().stream()
                         .mapToLong(AlgorithmParameter::getNumberOfScenarios)
                         .reduce(1, Math::multiplyExact))
@@ -129,22 +129,26 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         return numberOfScenarios;
     }
 
-    private void handleBasicAlgorithm(final Algorithm<T, U> algorithm, final T input, final ScoreTracker<T, U> scoreTracker) {
+    private void handleBasicAlgorithm(
+            final Class<? extends Algorithm> algorithmClass,
+            final T input,
+            final ScoreTracker<T, U> scoreTracker) {
+        final Algorithm<T, U> algorithm = constructInstance(algorithmClass);
         doAlgorithmIteration(input, algorithm, scoreTracker);
     }
 
     private void handleParameterizedAlgorithm(
-            final Algorithm<T, U> algorithm,
+            final Class<? extends Algorithm> algorithmClass,
             final AlgorithmSpecification<T, U> algorithmSpecification,
             final T input,
             final ScoreTracker<T, U> scoreTracker
     ) {
-        final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
         final ParameterStreamer parameterStreamer = new ParameterStreamer(algorithmSpecification.getParameters());
         while (parameterStreamer.hasNext()) {
+            final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) constructInstance(algorithmClass);
             final Map<String, Object> iterationParameters = parameterStreamer.next();
             parameterizedAlgorithm.handleParameters(iterationParameters);
-            doAlgorithmIteration(input, parameterizedAlgorithm, iterationParameters, scoreTracker);
+            doAlgorithmIteration(input, parameterizedAlgorithm, Optional.of(iterationParameters), scoreTracker);
         }
     }
 
@@ -200,7 +204,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     }
 
     private void writeSourcesZipToOutputFolder() {
-        final Class<?> algorithmClass = algorithmSpecifications.get(0).getAlgorithm().getClass();
+        final Class<?> algorithmClass = algorithmSpecifications.get(0).getAlgorithmClass();
         final Path srcMainJavaPath = getSrcMainJavaLocationFromClass(algorithmClass);
         zipFilesToFolder(srcMainJavaPath, outputFolder);
     }

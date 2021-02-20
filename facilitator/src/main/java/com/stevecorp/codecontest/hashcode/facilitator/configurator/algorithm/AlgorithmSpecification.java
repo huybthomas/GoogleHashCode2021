@@ -14,15 +14,15 @@ import static com.stevecorp.codecontest.hashcode.facilitator.configurator.algori
 import static com.stevecorp.codecontest.hashcode.facilitator.util.CollectionUtils.join;
 
 @Getter
-@SuppressWarnings({ "unused", "unchecked", "rawtypes", "FieldCanBeLocal" })
+@SuppressWarnings({ "unused", "rawtypes", "FieldCanBeLocal" })
 public class AlgorithmSpecification<T extends InputModel, U extends OutputModel> {
 
-    private final Algorithm<T, U> algorithm;
+    private final Class<? extends Algorithm> algorithmClass;
     private final AlgorithmType algorithmType;
     private final List<AlgorithmParameter> parameters;
 
     private AlgorithmSpecification(final SpecificationBuilder<T, U> builder) {
-        this.algorithm = builder.algorithm;
+        this.algorithmClass = builder.algorithmClass;
         this.algorithmType = builder.algorithmType;
         this.parameters = builder.parameters;
     }
@@ -37,7 +37,7 @@ public class AlgorithmSpecification<T extends InputModel, U extends OutputModel>
 
     public static final class SpecificationBuilder<T extends InputModel, U extends OutputModel> {
 
-        Algorithm<T, U> algorithm;
+        Class<? extends Algorithm> algorithmClass;
         AlgorithmType algorithmType;
         List<AlgorithmParameter> parameters;
 
@@ -62,10 +62,10 @@ public class AlgorithmSpecification<T extends InputModel, U extends OutputModel>
          *
          * An algorithm that receives the input and creates the output - once per input file.
          *
-         * @param algorithm an instance of the desired basic algorithm
+         * @param algorithmClass class reference of the BasicAlgorithm implementation
          */
-        public Specification_BasicAlgorithm_Final<T, U> basicAlgorithm(BasicAlgorithm algorithm) {
-            builder.algorithm = algorithm;
+        public Specification_BasicAlgorithm_Final<T, U> basicAlgorithm(Class<? extends BasicAlgorithm> algorithmClass) {
+            builder.algorithmClass = algorithmClass;
             builder.algorithmType = DEFAULT;
             return new Specification_BasicAlgorithm_Final<>(this);
         }
@@ -76,10 +76,10 @@ public class AlgorithmSpecification<T extends InputModel, U extends OutputModel>
          * An algorithm that receives the input and creates the output - for every possible combination of provided
          *  parameter ranges for every input file.
          *
-         * @param algorithm an instance of the desired parameterized algorithm
+         * @param algorithmClass class reference of the ParameterizedAlgorithm implementation
          */
-        public Specification_ParameterizedAlgorithm_Parameter<T, U> parameterizedAlgorithm(ParameterizedAlgorithm algorithm) {
-            builder.algorithm = algorithm;
+        public Specification_ParameterizedAlgorithm_Parameter<T, U> parameterizedAlgorithm(final Class<? extends ParameterizedAlgorithm> algorithmClass) {
+            builder.algorithmClass = algorithmClass;
             builder.algorithmType = PARAMETERIZED;
             return new Specification_ParameterizedAlgorithm_Parameter<>(this);
         }
