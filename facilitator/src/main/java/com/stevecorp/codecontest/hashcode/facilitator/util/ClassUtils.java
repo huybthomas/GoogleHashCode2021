@@ -13,6 +13,9 @@ public class ClassUtils {
     }
 
     public static <T> T constructInstance(final Class<T> clazz) {
+        if (clazz == null) {
+            return null;
+        }
         try {
             return clazz.getConstructor().newInstance();
         } catch (final Exception e) {

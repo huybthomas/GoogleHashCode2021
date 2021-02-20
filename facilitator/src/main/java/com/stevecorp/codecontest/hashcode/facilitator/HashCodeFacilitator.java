@@ -66,9 +66,9 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         this.inputFileNames = builder.inputFileNames;
         this.inputParser = constructInstance(builder.inputParserClass);
         this.algorithmSpecifications = builder.algorithmSpecifications;
-        this.outputValidator = Optional.ofNullable(builder.outputValidator);
-        this.scoreCalculator = builder.scoreCalculator;
-        this.outputProducer = builder.outputProducer;
+        this.outputValidator = Optional.ofNullable(constructInstance(builder.outputValidatorClass));
+        this.scoreCalculator = constructInstance(builder.scoreCalculatorClass);
+        this.outputProducer = constructInstance(builder.outputProducerClass);
         this.inputFolder = builder.inputFolder != null ? builder.inputFolder : DEFAULT_INPUT_FOLDER;
         this.outputFolder = builder.outputFolder != null ? builder.outputFolder : DEFAULT_OUTPUT_FOLDER;
         this.numberOfSuboptimalSolutionsToShow = builder.numberOfSuboptimalSolutionsToShow;
@@ -468,9 +468,9 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         List<String> inputFileNames;
         Class<? extends InputParser> inputParserClass;
         List<AlgorithmSpecification<T, U>> algorithmSpecifications;
-        OutputValidator<T, U> outputValidator;
-        ScoreCalculator<T, U> scoreCalculator;
-        OutputProducer<U> outputProducer;
+        Class<? extends OutputValidator> outputValidatorClass;
+        Class<? extends ScoreCalculator> scoreCalculatorClass;
+        Class<? extends OutputProducer> outputProducerClass;
         Path inputFolder;
         Path outputFolder;
         int numberOfSuboptimalSolutionsToShow;
@@ -606,10 +606,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
          * In case the output is invalid, an exception will be thrown and the entire run (for all input files)
          *  considered invalid.
          *
-         * @param outputValidator an OutputValidator instance
+         * @param outputValidatorClass class reference of the OutputValidator implementation
          */
-        public Configurator_ScoreCalculator<T, U> withOutputValidator(final OutputValidator outputValidator) {
-            configBuilder.outputValidator = outputValidator;
+        public Configurator_ScoreCalculator<T, U> withOutputValidator(final Class<? extends OutputValidator> outputValidatorClass) {
+            configBuilder.outputValidatorClass = outputValidatorClass;
             return new Configurator_ScoreCalculator<>(this);
         }
 
@@ -628,10 +628,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
          *
          * This calculator is used to select the best possible solution for every algorithm.
          *
-         * @param scoreCalculator a ScoreCalculator instance
+         * @param scoreCalculatorClass class reference of the ScoreCalculator implementation
          */
-        public Configurator_OutputProducer<T, U> withScoreCalculator(final ScoreCalculator scoreCalculator) {
-            configBuilder.scoreCalculator = scoreCalculator;
+        public Configurator_OutputProducer<T, U> withScoreCalculator(final Class<? extends ScoreCalculator> scoreCalculatorClass) {
+            configBuilder.scoreCalculatorClass = scoreCalculatorClass;
             return new Configurator_OutputProducer<>(this);
         }
 
@@ -648,10 +648,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         /**
          * The output producer that converts the algorithm output to the suitable output for a submission.
          *
-         * @param outputProducer an OutputProducer instance
+         * @param outputProducerClass class reference of the OutputProducer implementation
          */
-        public Configurator_Final<T, U> withOutputProducer(final OutputProducer outputProducer) {
-            configBuilder.outputProducer = outputProducer;
+        public Configurator_Final<T, U> withOutputProducer(final Class<? extends OutputProducer> outputProducerClass) {
+            configBuilder.outputProducerClass = outputProducerClass;
             return new Configurator_Final<>(this);
         }
 

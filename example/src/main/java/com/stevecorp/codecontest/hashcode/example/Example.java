@@ -30,9 +30,9 @@ public class Example {
                                 )
                                 .build()
                 )
-                .withOutputValidator(new OutputValidatorImpl())
-                .withScoreCalculator(new ScoreCalculatorImpl())
-                .withOutputProducer(new OutputProducerImpl())
+                .withOutputValidator(OutputValidatorImpl.class)
+                .withScoreCalculator(ScoreCalculatorImpl.class)
+                .withOutputProducer(OutputProducerImpl.class)
                 .run();
     }
 
