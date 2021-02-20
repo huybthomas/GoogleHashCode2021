@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.ALL_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SELECTED_INPUT_FILES;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.constructInstance;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.simpleName;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.CollectionUtils.join;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.cleanFolderContents;
@@ -63,7 +64,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         this.debugMode = builder.debugMode;
         this.inputSpecifier = builder.inputSpecifier;
         this.inputFileNames = builder.inputFileNames;
-        this.inputParser = builder.inputParser;
+        this.inputParser = constructInstance(builder.inputParserClass);
         this.algorithmSpecifications = builder.algorithmSpecifications;
         this.outputValidator = Optional.ofNullable(builder.outputValidator);
         this.scoreCalculator = builder.scoreCalculator;
@@ -465,7 +466,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         boolean debugMode;
         InputSpecifier inputSpecifier;
         List<String> inputFileNames;
-        InputParser<T> inputParser;
+        Class<? extends InputParser> inputParserClass;
         List<AlgorithmSpecification<T, U>> algorithmSpecifications;
         OutputValidator<T, U> outputValidator;
         ScoreCalculator<T, U> scoreCalculator;
@@ -552,10 +553,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         /**
          * The component that will transform the file input to the specified POJO for easier processing.
          *
-         * @param inputParser an InputParser instance
+         * @param inputParserClass class reference of the InputParser implementation
          */
-        public Configurator_Algorithm<T, U> withInputParser(final InputParser inputParser) {
-            configBuilder.inputParser = inputParser;
+        public Configurator_Algorithm<T, U> withInputParser(final Class<? extends InputParser> inputParserClass) {
+            configBuilder.inputParserClass = inputParserClass;
             return new Configurator_Algorithm<>(this);
         }
 

@@ -20,13 +20,13 @@ public class Example {
     public static void main(final String... args) {
         HashCodeFacilitator.configurator()
                 .forAllInputFiles()
-                .withInputParser(new InputParserImpl())
+                .withInputParser(InputParserImpl.class)
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(new StevesAmazingAlgorithm())
                                 .withParameters(
-                                        new BoundedParameter(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR, 100, 5000, 100),
-                                        new EnumeratedParameter(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR, SUM, MULTIPLICATION)
+                                        BoundedParameter.of(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR, 100, 1000, 100),
+                                        EnumeratedParameter.of(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR, SUM, MULTIPLICATION)
                                 )
                                 .build()
                 )

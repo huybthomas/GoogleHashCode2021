@@ -17,11 +17,15 @@ public class BoundedParameter extends AlgorithmParameter {
     private final long upperLimit;
     private final long stepSize;
 
-    public BoundedParameter(final String name, final long lowerLimit, final long upperLimit, final long stepSize) {
+    private BoundedParameter(final String name, final long lowerLimit, final long upperLimit, final long stepSize) {
         super(name);
         this.lowerLimit = lowerLimit;
         this.upperLimit = upperLimit;
         this.stepSize = stepSize;
+    }
+
+    public static BoundedParameter of(final String name, final long lowerLimit, final long upperLimit, final long stepSize) {
+        return new BoundedParameter(name, lowerLimit, upperLimit, stepSize);
     }
 
     @Override
