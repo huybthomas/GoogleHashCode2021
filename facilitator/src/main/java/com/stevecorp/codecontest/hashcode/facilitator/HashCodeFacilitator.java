@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -143,12 +146,19 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             final T input,
             final ScoreTracker<T, U> scoreTracker
     ) {
+        final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         final ParameterStreamer parameterStreamer = new ParameterStreamer(algorithmSpecification.getParameters());
         while (parameterStreamer.hasNext()) {
             final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) constructInstance(algorithmClass);
             final Map<String, Object> iterationParameters = parameterStreamer.next();
             parameterizedAlgorithm.handleParameters(iterationParameters);
-            doAlgorithmIteration(input, parameterizedAlgorithm, Optional.of(iterationParameters), scoreTracker);
+            executorService.execute(() -> doAlgorithmIteration(input, parameterizedAlgorithm, Optional.of(iterationParameters), scoreTracker));
+        }
+        executorService.shutdown();
+        try {
+            final boolean terminated = executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (final Exception e) {
+            throw new RuntimeException("Something went wrong during multi-threaded algorithm execution", e);
         }
     }
 

@@ -25,7 +25,7 @@ public class Example {
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(StevesAmazingAlgorithm.class)
                                 .withParameters(
-                                        BoundedParameter.of(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR, 100, 1000, 100),
+                                        BoundedParameter.of(PARAMETER_COMMON_INGREDIENT_PUNISHMENT_FACTOR, 100, 5000, 100),
                                         EnumeratedParameter.of(PARAMETER_PIZZA_INGREDIENT_SCORE_OPERATOR, SUM, MULTIPLICATION)
                                 )
                                 .build()
