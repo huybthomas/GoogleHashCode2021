@@ -12,6 +12,7 @@
     <modules>
         <module>facilitator</module>
         <module>example</module>
+        <module>hashcode2021</module>
     </modules>
 
     <properties>
@@ -39,6 +40,11 @@
             <dependency>
                 <groupId>com.stevecorp.codecontest</groupId>
                 <artifactId>example</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.stevecorp.codecontest</groupId>
+                <artifactId>hashcode2021</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

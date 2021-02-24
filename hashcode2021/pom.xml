@@ -10,7 +10,7 @@
         <version>1.0.0</version>
     </parent>
 
-    <artifactId>example</artifactId>
+    <artifactId>hashcode2021</artifactId>
 
     <dependencies>
         <!-- MODULE DEPENDENCIES -->
