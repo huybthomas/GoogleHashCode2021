@@ -16,9 +16,13 @@ public class EnumeratedParameter extends AlgorithmParameter {
 
     private final List<Object> values;
 
-    public EnumeratedParameter(final String name, final Object value1, final Object... additionalValues) {
+    private EnumeratedParameter(final String name, final Object value1, final Object... additionalValues) {
         super(name);
         this.values = CollectionUtils.join(value1, additionalValues);
+    }
+
+    public static EnumeratedParameter of(final String name, final Object value1, final Object... additionalValues) {
+        return new EnumeratedParameter(name, value1, additionalValues);
     }
 
     @Override

@@ -20,11 +20,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.ALL_INPUT_FILES;
 import static com.stevecorp.codecontest.hashcode.facilitator.configurator.input.InputSpecifier.SELECTED_INPUT_FILES;
+import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.constructInstance;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.ClassUtils.simpleName;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.CollectionUtils.join;
 import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.cleanFolderContents;
@@ -39,7 +43,7 @@ import static com.stevecorp.codecontest.hashcode.facilitator.util.FileUtils.zipF
 import static java.text.MessageFormat.format;
 import static java.util.Comparator.comparingLong;
 
-@SuppressWarnings({ "unused, unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
+@SuppressWarnings({ "unused", "unchecked", "rawtypes", "FieldCanBeLocal", "OptionalUsedAsFieldOrParameterType" })
 public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
 
     private static final Path DEFAULT_INPUT_FOLDER = getFolderFromResources("input");
@@ -63,11 +67,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         this.debugMode = builder.debugMode;
         this.inputSpecifier = builder.inputSpecifier;
         this.inputFileNames = builder.inputFileNames;
-        this.inputParser = builder.inputParser;
+        this.inputParser = constructInstance(builder.inputParserClass);
         this.algorithmSpecifications = builder.algorithmSpecifications;
-        this.outputValidator = Optional.ofNullable(builder.outputValidator);
-        this.scoreCalculator = builder.scoreCalculator;
-        this.outputProducer = builder.outputProducer;
+        this.outputValidator = Optional.ofNullable(constructInstance(builder.outputValidatorClass));
+        this.scoreCalculator = constructInstance(builder.scoreCalculatorClass);
+        this.outputProducer = constructInstance(builder.outputProducerClass);
         this.inputFolder = builder.inputFolder != null ? builder.inputFolder : DEFAULT_INPUT_FOLDER;
         this.outputFolder = builder.outputFolder != null ? builder.outputFolder : DEFAULT_OUTPUT_FOLDER;
         this.numberOfSuboptimalSolutionsToShow = builder.numberOfSuboptimalSolutionsToShow;
@@ -84,13 +88,13 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             final T input = parseInputFile(inputFilePath);
             final ScoreTracker<T, U> scoreTracker = new ScoreTracker<>(debugMode, getNumberOfScenarios(), numberOfSuboptimalSolutionsToShow);
             for (final AlgorithmSpecification<T, U> algorithmSpecification : algorithmSpecifications) {
-                final Algorithm<T, U> algorithm = algorithmSpecification.getAlgorithm();
-                if (algorithm instanceof BasicAlgorithm) {
-                    handleBasicAlgorithm(algorithm, input, scoreTracker);
-                } else if (algorithm instanceof ParameterizedAlgorithm) {
-                    handleParameterizedAlgorithm(algorithm, algorithmSpecification, input, scoreTracker);
+                final Class<? extends Algorithm> algorithmClass = algorithmSpecification.getAlgorithmClass();
+                if (algorithmClass.getSuperclass() == BasicAlgorithm.class) {
+                    handleBasicAlgorithm(algorithmClass, input, scoreTracker);
+                } else if (algorithmClass.getSuperclass() == ParameterizedAlgorithm.class) {
+                    handleParameterizedAlgorithm(algorithmClass, algorithmSpecification, input, scoreTracker);
                 } else {
-                    throw new RuntimeException(format("Unexpected algorithm type: ''{0}''", simpleName(algorithm)));
+                    throw new RuntimeException(format("Unexpected algorithm type: ''{0}''", simpleName(algorithmClass)));
                 }
             }
             scoreTracker.printReport();
@@ -117,10 +121,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     private long getNumberOfScenarios() {
         long numberOfScenarios = 0;
         numberOfScenarios += algorithmSpecifications.stream()
-                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithm() instanceof BasicAlgorithm)
+                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithmClass().getSuperclass() == BasicAlgorithm.class)
                 .count();
         numberOfScenarios += algorithmSpecifications.stream()
-                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithm() instanceof ParameterizedAlgorithm)
+                .filter(algorithmSpecification -> algorithmSpecification.getAlgorithmClass().getSuperclass() == ParameterizedAlgorithm.class)
                 .mapToLong(algorithmSpecification -> algorithmSpecification.getParameters().stream()
                         .mapToLong(AlgorithmParameter::getNumberOfScenarios)
                         .reduce(1, Math::multiplyExact))
@@ -128,22 +132,33 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         return numberOfScenarios;
     }
 
-    private void handleBasicAlgorithm(final Algorithm<T, U> algorithm, final T input, final ScoreTracker<T, U> scoreTracker) {
+    private void handleBasicAlgorithm(
+            final Class<? extends Algorithm> algorithmClass,
+            final T input,
+            final ScoreTracker<T, U> scoreTracker) {
+        final Algorithm<T, U> algorithm = constructInstance(algorithmClass);
         doAlgorithmIteration(input, algorithm, scoreTracker);
     }
 
     private void handleParameterizedAlgorithm(
-            final Algorithm<T, U> algorithm,
+            final Class<? extends Algorithm> algorithmClass,
             final AlgorithmSpecification<T, U> algorithmSpecification,
             final T input,
             final ScoreTracker<T, U> scoreTracker
     ) {
-        final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) algorithm;
+        final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         final ParameterStreamer parameterStreamer = new ParameterStreamer(algorithmSpecification.getParameters());
         while (parameterStreamer.hasNext()) {
+            final ParameterizedAlgorithm<T, U> parameterizedAlgorithm = (ParameterizedAlgorithm<T, U>) constructInstance(algorithmClass);
             final Map<String, Object> iterationParameters = parameterStreamer.next();
             parameterizedAlgorithm.handleParameters(iterationParameters);
-            doAlgorithmIteration(input, parameterizedAlgorithm, iterationParameters, scoreTracker);
+            executorService.execute(() -> doAlgorithmIteration(input, parameterizedAlgorithm, Optional.of(iterationParameters), scoreTracker));
+        }
+        executorService.shutdown();
+        try {
+            final boolean terminated = executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (final Exception e) {
+            throw new RuntimeException("Something went wrong during multi-threaded algorithm execution", e);
         }
     }
 
@@ -199,7 +214,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
     }
 
     private void writeSourcesZipToOutputFolder() {
-        final Class<?> algorithmClass = algorithmSpecifications.get(0).getAlgorithm().getClass();
+        final Class<?> algorithmClass = algorithmSpecifications.get(0).getAlgorithmClass();
         final Path srcMainJavaPath = getSrcMainJavaLocationFromClass(algorithmClass);
         zipFilesToFolder(srcMainJavaPath, outputFolder);
     }
@@ -465,11 +480,11 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         boolean debugMode;
         InputSpecifier inputSpecifier;
         List<String> inputFileNames;
-        InputParser<T> inputParser;
+        Class<? extends InputParser> inputParserClass;
         List<AlgorithmSpecification<T, U>> algorithmSpecifications;
-        OutputValidator<T, U> outputValidator;
-        ScoreCalculator<T, U> scoreCalculator;
-        OutputProducer<U> outputProducer;
+        Class<? extends OutputValidator> outputValidatorClass;
+        Class<? extends ScoreCalculator> scoreCalculatorClass;
+        Class<? extends OutputProducer> outputProducerClass;
         Path inputFolder;
         Path outputFolder;
         int numberOfSuboptimalSolutionsToShow;
@@ -552,10 +567,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         /**
          * The component that will transform the file input to the specified POJO for easier processing.
          *
-         * @param inputParser an InputParser instance
+         * @param inputParserClass class reference of the InputParser implementation
          */
-        public Configurator_Algorithm<T, U> withInputParser(final InputParser inputParser) {
-            configBuilder.inputParser = inputParser;
+        public Configurator_Algorithm<T, U> withInputParser(final Class<? extends InputParser> inputParserClass) {
+            configBuilder.inputParserClass = inputParserClass;
             return new Configurator_Algorithm<>(this);
         }
 
@@ -605,10 +620,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
          * In case the output is invalid, an exception will be thrown and the entire run (for all input files)
          *  considered invalid.
          *
-         * @param outputValidator an OutputValidator instance
+         * @param outputValidatorClass class reference of the OutputValidator implementation
          */
-        public Configurator_ScoreCalculator<T, U> withOutputValidator(final OutputValidator outputValidator) {
-            configBuilder.outputValidator = outputValidator;
+        public Configurator_ScoreCalculator<T, U> withOutputValidator(final Class<? extends OutputValidator> outputValidatorClass) {
+            configBuilder.outputValidatorClass = outputValidatorClass;
             return new Configurator_ScoreCalculator<>(this);
         }
 
@@ -627,10 +642,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
          *
          * This calculator is used to select the best possible solution for every algorithm.
          *
-         * @param scoreCalculator a ScoreCalculator instance
+         * @param scoreCalculatorClass class reference of the ScoreCalculator implementation
          */
-        public Configurator_OutputProducer<T, U> withScoreCalculator(final ScoreCalculator scoreCalculator) {
-            configBuilder.scoreCalculator = scoreCalculator;
+        public Configurator_OutputProducer<T, U> withScoreCalculator(final Class<? extends ScoreCalculator> scoreCalculatorClass) {
+            configBuilder.scoreCalculatorClass = scoreCalculatorClass;
             return new Configurator_OutputProducer<>(this);
         }
 
@@ -647,10 +662,10 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
         /**
          * The output producer that converts the algorithm output to the suitable output for a submission.
          *
-         * @param outputProducer an OutputProducer instance
+         * @param outputProducerClass class reference of the OutputProducer implementation
          */
-        public Configurator_Final<T, U> withOutputProducer(final OutputProducer outputProducer) {
-            configBuilder.outputProducer = outputProducer;
+        public Configurator_Final<T, U> withOutputProducer(final Class<? extends OutputProducer> outputProducerClass) {
+            configBuilder.outputProducerClass = outputProducerClass;
             return new Configurator_Final<>(this);
         }
 
