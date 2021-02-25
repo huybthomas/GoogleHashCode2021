@@ -7,11 +7,12 @@ import com.stevecorp.codecontest.hashcode.hashcode2021.component.Output;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class Ace extends ParameterizedAlgorithm<Input, Output> {
+public class Ace extends BasicAlgorithm<Input, Output> {
 
     public static final String RELATIVE_INTERSECTION_DURATION_MULTIPLIER = "RELATIVE_INTERSECTION_DURATION_MULTIPLIER";
-    private long relativeIntersectionDurationMultiplier = 1;
+    private long relativeIntersectionDurationMultiplier = 10;
 
     @Override
     public Output solve(final Input input) {
@@ -76,23 +77,25 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
                 .greenLightDuration(relativeStreetTimingForIntersection.get(extendedStreet))
                 .build()).collect(Collectors.toList());
 
+        List<Output.GreenLightDuration> onlyValidDurations = durations.stream().filter(greenLightDuration -> greenLightDuration.greenLightDuration >= 1).collect(Collectors.toList());
+
         return Output.IntersectionSchedule.builder()
                 .intersectionId(intersection.id)
-                .numberOfIncomingStreets(inputs.size())
-                .greenLightDurations(durations)
+                .numberOfIncomingStreets(onlyValidDurations.size())
+                .greenLightDurations(onlyValidDurations)
                 .build();
     }
 
     private Map<Integer, ExtendedStreet> parseStreets(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
         //Num cars on street
-        return streetMap.entrySet().stream()
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> {
+        return streetMap.entrySet().stream().parallel()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     Input.Street street = entry.getValue();
                     ExtendedStreet extendedStreet = new ExtendedStreet(street);
 
-                    extendedStreet.totalNumCars = carPaths.stream()
+                    extendedStreet.totalNumCars = carPaths.stream().parallel()
                             .map(Input.CarPath::getStreetIds)
-                            .mapToLong(streetIds -> streetIds.stream().filter(id -> id.equals(street.streetId)).count()).sum();
+                            .mapToLong(streetIds -> streetIds.stream().parallel().filter(id -> id.equals(street.streetId)).count()).sum();
 
                     return extendedStreet;
                 }));
@@ -109,11 +112,6 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
                     .sum();
             return extendedCarPath;
         }).collect(Collectors.toList());
-    }
-
-    @Override
-    public void handleParameters(Map<String, Object> parameters) {
-        relativeIntersectionDurationMultiplier = (long) parameters.get(Ace.RELATIVE_INTERSECTION_DURATION_MULTIPLIER);
     }
 
     private class ExtendedCarPath {
