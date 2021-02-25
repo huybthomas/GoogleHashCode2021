@@ -4,6 +4,7 @@ import com.stevecorp.codecontest.hashcode.facilitator.HashCodeFacilitator;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.AlgorithmSpecification;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.BoundedParameter;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.parameter.EnumeratedParameter;
+import com.stevecorp.codecontest.hashcode.hashcode2021.algorithm.Ace;
 import com.stevecorp.codecontest.hashcode.hashcode2021.algorithm.Algorithm1;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.InputParserImpl;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.OutputProducerImpl;
@@ -21,9 +22,9 @@ public class HashCode2021 {
                 .withInputParser(InputParserImpl.class)
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
-                                .parameterizedAlgorithm(Algorithm1.class)
+                                .parameterizedAlgorithm(Ace.class)
                                 .withParameters(
-                                        BoundedParameter.of(PARAMETER_1_NAME, 1,1, 1)
+                                        BoundedParameter.of(Ace.RELATIVE_INTERSECTION_DURATION_MULTIPLIER, 1,10, 1)
                                 )
                                 .build()
                 )

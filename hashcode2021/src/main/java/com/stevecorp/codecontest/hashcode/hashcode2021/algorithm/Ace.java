@@ -1,27 +1,17 @@
 package com.stevecorp.codecontest.hashcode.hashcode2021.algorithm;
 
+import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.BasicAlgorithm;
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.ParameterizedAlgorithm;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Input;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Output;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Ace extends ParameterizedAlgorithm<Input, Output> {
 
-    public static final String PARAMETER_1_NAME = "P1";
-    public static final String PARAMETER_2_NAME = "P2";
-
-    private long parameter1Value;
-    private String parameter2Value;
-
-    @Override
-    public void handleParameters(final Map<String, Object> parameters) {
-        parameter1Value = (long) parameters.get(PARAMETER_1_NAME);
-        parameter2Value = (String) parameters.get(PARAMETER_2_NAME);
-    }
+    public static final String RELATIVE_INTERSECTION_DURATION_MULTIPLIER = "RELATIVE_INTERSECTION_DURATION_MULTIPLIER";
+    private long relativeIntersectionDurationMultiplier = 1;
 
     @Override
     public Output solve(final Input input) {
@@ -37,8 +27,9 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
 
         List<ExtendedCarPath> extendedCarPaths = parseCarPaths(streetMap, input.carPaths);
         Map<Integer, ExtendedStreet> extendedStreet = parseStreets(streetMap, input.carPaths);
+        Map<Integer, Intersection> intersections = parseIntersections(extendedStreet);
 
-        List<Output.IntersectionSchedule> schedules = parse(extendedCarPaths, extendedStreet);
+        List<Output.IntersectionSchedule> schedules = parse(intersections, extendedCarPaths, extendedStreet);
 
         return Output.builder()
                 .numberOfIntersectionsSchedules(schedules.size())
@@ -46,9 +37,50 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
                 .build();
     }
 
-    private List<Output.IntersectionSchedule> parse(List<ExtendedCarPath> extendedCarPaths, Map<Integer, ExtendedStreet> extendedStreet) {
-        //TODO
-        return new ArrayList<>();
+    private Map<Integer, Intersection> parseIntersections(Map<Integer, ExtendedStreet> extendedStreets) {
+        Map<Integer, Intersection> intersections = new HashMap<>();
+
+        for (Map.Entry<Integer, ExtendedStreet> entry : extendedStreets.entrySet()) {
+            ExtendedStreet extendedStreet = entry.getValue();
+            Input.Street street = extendedStreet.street;
+            Intersection startIntersection = intersections.get(street.startIntersection);
+            if(startIntersection == null) {
+                startIntersection = new Intersection(street.startIntersection);
+                intersections.put(street.startIntersection, startIntersection);
+            }
+            Intersection endIntersection = intersections.get(street.endIntersection);
+            if(endIntersection == null) {
+                endIntersection = new Intersection(street.endIntersection);
+                intersections.put(street.endIntersection, endIntersection);
+            }
+
+            startIntersection.outputs.add(extendedStreet);
+            endIntersection.inputs.add(extendedStreet);
+        }
+
+        return intersections;
+    }
+
+    private List<Output.IntersectionSchedule> parse(Map<Integer, Intersection> intersections, List<ExtendedCarPath> extendedCarPaths, Map<Integer, ExtendedStreet> extendedStreet) {
+        //Determine intersection schedule based on number of expected cars
+        return intersections.entrySet().stream()
+                .map(entry -> computeToIntersectionSchedule(entry.getValue())).collect(Collectors.toList());
+    }
+
+    private Output.IntersectionSchedule computeToIntersectionSchedule(Intersection intersection) {
+        List<ExtendedStreet> inputs = intersection.inputs;
+        long max = inputs.stream().mapToLong(extendedStreet -> extendedStreet.totalNumCars).max().getAsLong();
+        Map<ExtendedStreet, Integer> relativeStreetTimingForIntersection = inputs.stream().collect(Collectors.toMap(extendedStreet -> extendedStreet, extendedStreet -> (int) (((double) extendedStreet.totalNumCars / (double) max) * relativeIntersectionDurationMultiplier)));
+        List<Output.GreenLightDuration> durations = inputs.stream().map(extendedStreet -> Output.GreenLightDuration.builder()
+                .streetName(extendedStreet.street.streetName)
+                .greenLightDuration(relativeStreetTimingForIntersection.get(extendedStreet))
+                .build()).collect(Collectors.toList());
+
+        return Output.IntersectionSchedule.builder()
+                .intersectionId(intersection.id)
+                .numberOfIncomingStreets(inputs.size())
+                .greenLightDurations(durations)
+                .build();
     }
 
     private Map<Integer, ExtendedStreet> parseStreets(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
@@ -79,6 +111,11 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
         }).collect(Collectors.toList());
     }
 
+    @Override
+    public void handleParameters(Map<String, Object> parameters) {
+        relativeIntersectionDurationMultiplier = (long) parameters.get(Ace.RELATIVE_INTERSECTION_DURATION_MULTIPLIER);
+    }
+
     private class ExtendedCarPath {
         final Input.CarPath carPath;
 
@@ -95,6 +132,16 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
 
         private ExtendedStreet(Input.Street street) {
             this.street = street;
+        }
+    }
+
+    private class Intersection {
+        int id;
+        final List<ExtendedStreet> inputs = new ArrayList<>();
+        final List<ExtendedStreet> outputs = new ArrayList<>();
+
+        public Intersection(int id) {
+            this.id = id;
         }
     }
 }
