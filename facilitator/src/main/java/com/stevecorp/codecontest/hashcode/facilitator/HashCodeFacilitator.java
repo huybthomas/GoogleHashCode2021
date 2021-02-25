@@ -275,7 +275,7 @@ public class HashCodeFacilitator<T extends InputModel, U extends OutputModel> {
             }
         }
 
-        void printReport() {
+        synchronized void printReport() {
             System.out.println("Optimal solution:");
             printReportPart(getBestOutput(), false);
             if (numberOfResultsToShow > 1) {
