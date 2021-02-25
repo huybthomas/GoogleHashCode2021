@@ -23,8 +23,7 @@ public class HashCode2021 {
                         AlgorithmSpecification.builder()
                                 .parameterizedAlgorithm(Algorithm1.class)
                                 .withParameters(
-                                        BoundedParameter.of(PARAMETER_1_NAME, 1,10, 1),
-                                        EnumeratedParameter.of(PARAMETER_2_NAME, "P1", "P2")
+                                        BoundedParameter.of(PARAMETER_1_NAME, 1,1, 1)
                                 )
                                 .build()
                 )
