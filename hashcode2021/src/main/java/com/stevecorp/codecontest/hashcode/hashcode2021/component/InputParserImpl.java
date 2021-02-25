@@ -34,11 +34,11 @@ public class InputParserImpl implements InputParser<Input> {
         }
 
         final List<Input.CarPath> carPaths = new ArrayList<>();
-        for(final String carPathInput : input.subList(1 + inputHeading[2] + 1, input.size())) {
+        for(final String carPathInput : input.subList(1 + inputHeading[2], input.size())) {
             final String[] carPathInputElements = carPathInput.split(" ");
             final int numberOfStreets = Integer.parseInt(carPathInputElements[0]);
             final List<Integer> streetIds = new ArrayList<>();
-            for (int streetIndex = 1; streetIndex < numberOfStreets; streetIndex++) {
+            for (int streetIndex = 1; streetIndex <= numberOfStreets; streetIndex++) {
                 final String streetName = carPathInputElements[streetIndex];
                 streetIds.add(streetIdMapping.get(streetName));
             }

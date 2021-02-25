@@ -17,7 +17,7 @@ public class HashCode2021 {
 
     public static void main(final String... args) {
         HashCodeFacilitator.configurator()
-                .forAllInputFiles()
+                .forASingleInputFile("d")
                 .withInputParser(InputParserImpl.class)
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
