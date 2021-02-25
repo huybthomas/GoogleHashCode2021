@@ -24,7 +24,7 @@ public class Input implements InputModel {
     @Getter
     @Setter
     @Builder(toBuilder = true)
-    public static final class Street {
+    public static class Street {
 
         public int streetId;
         public String streetName;
@@ -45,7 +45,7 @@ public class Input implements InputModel {
     @Getter
     @Setter
     @Builder(toBuilder = true)
-    public static final class CarPath {
+    public static class CarPath {
 
         public int numberOfStreets;
         public List<Integer> streetIds;
