@@ -4,6 +4,7 @@ import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.alg
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Input;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Output;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,18 +36,35 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
         Map<Integer, Input.Street> streetMap = input.streets.stream().collect(Collectors.toMap(street -> street.streetId, street -> street));
 
         List<ExtendedCarPath> extendedCarPaths = parseCarPaths(streetMap, input.carPaths);
-        List<ExtendedStreet> extendedStreet = parseStreets(streetMap, input.carPaths);
+        Map<Integer, ExtendedStreet> extendedStreet = parseStreets(streetMap, input.carPaths);
+
+        List<Output.IntersectionSchedule> schedules = parse(extendedCarPaths, extendedStreet);
 
         return Output.builder()
-//                .
+                .numberOfIntersectionsSchedules(schedules.size())
+                .intersectionSchedules(schedules)
                 .build();
     }
 
-    private List<ExtendedStreet> parseStreets(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
+    private List<Output.IntersectionSchedule> parse(List<ExtendedCarPath> extendedCarPaths, Map<Integer, ExtendedStreet> extendedStreet) {
+        //TODO
+        return new ArrayList<>();
+    }
+
+    private Map<Integer, ExtendedStreet> parseStreets(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
         //Num cars on street
+        return streetMap.entrySet().stream()
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> {
+                    Input.Street street = entry.getValue();
+                    ExtendedStreet extendedStreet = new ExtendedStreet(street);
 
+                    extendedStreet.totalNumCars = carPaths.stream()
+                            .map(Input.CarPath::getStreetIds)
+                            .mapToLong(streetIds -> streetIds.stream().filter(id -> id.equals(street.streetId)).count()).sum();
 
-        return null;
+                    return extendedStreet;
+                }));
+
     }
 
     private List<ExtendedCarPath> parseCarPaths(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
@@ -73,6 +91,7 @@ public class Ace extends ParameterizedAlgorithm<Input, Output> {
 
     private class ExtendedStreet {
         final Input.Street street;
+        public long totalNumCars;
 
         private ExtendedStreet(Input.Street street) {
             this.street = street;
