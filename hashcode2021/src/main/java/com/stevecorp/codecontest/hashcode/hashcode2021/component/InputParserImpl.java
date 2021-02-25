@@ -30,7 +30,7 @@ public class InputParserImpl implements InputParser<Input> {
                 streetIdMapping.put(streetName, currentId++);
             }
             final int streetId = streetIdMapping.get(streetName);
-            streets.add(new Input.Street(streetId, startIntersection, endIntersection, timeToGetFromStartToEnd));
+            streets.add(new Input.Street(streetId, streetName, startIntersection, endIntersection, timeToGetFromStartToEnd));
         }
 
         final List<Input.CarPath> carPaths = new ArrayList<>();

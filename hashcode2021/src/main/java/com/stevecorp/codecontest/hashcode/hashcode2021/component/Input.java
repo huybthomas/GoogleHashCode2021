@@ -27,12 +27,14 @@ public class Input implements InputModel {
     public static final class Street {
 
         public int streetId;
+        public String streetName;
         public int startIntersection;
         public int endIntersection;
         public int timeToGetFromStartToEnd;
 
-        public Street(final int streetId, final int startIntersection, final int endIntersection, final int timeToGetFromStartToEnd) {
+        public Street(final int streetId, final String streetName, final int startIntersection, final int endIntersection, final int timeToGetFromStartToEnd) {
             this.streetId = streetId;
+            this.streetName = streetName;
             this.startIntersection = startIntersection;
             this.endIntersection = endIntersection;
             this.timeToGetFromStartToEnd = timeToGetFromStartToEnd;
