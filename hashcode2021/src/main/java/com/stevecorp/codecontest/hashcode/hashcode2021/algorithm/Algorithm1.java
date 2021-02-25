@@ -25,6 +25,9 @@ public class Algorithm1 extends ParameterizedAlgorithm<Input, Output> {
     public Map<Integer, Intersection> usedIntersectionMap = new LinkedHashMap<>();
     public Map<Integer, Intersection> unusedIntersectionMap = new LinkedHashMap<>();
 
+    public int maxLightLength = 2;
+    public Double highestExpectCars = 0.0;
+
     @Override
     public void handleParameters(final Map<String, Object> parameters) {
         parameter1Value = (long) parameters.get(PARAMETER_1_NAME);
@@ -33,14 +36,26 @@ public class Algorithm1 extends ParameterizedAlgorithm<Input, Output> {
 
     @Override
     public Output solve(final Input input) {
+        if(input.simulationDurationSeconds < maxLightLength) {
+            maxLightLength = input.simulationDurationSeconds;
+        }
         for (Street street : input.getStreets()) {
             streets.put(street.getStreetId(), new StreetExt(street));
         }
 
         for (CarPath carPath : input.carPaths) {
             for (Integer streetId : carPath.streetIds) {
-                StreetExt street= streets.get(streetId);
-                usedStreets.put(streetId, street);
+                StreetExt streetExt = usedStreets.get(streetId);
+                if(streetExt == null) {
+                    StreetExt street = streets.get(streetId);
+                    street.addExpectCar();
+                    usedStreets.put(streetId, street);
+                } else {
+                    streetExt.addExpectCar();
+                    if(streetExt.expectedCars > highestExpectCars) {
+                        highestExpectCars = streetExt.expectedCars.doubleValue();
+                    }
+                }
             }
 
         }
@@ -109,7 +124,12 @@ public class Algorithm1 extends ParameterizedAlgorithm<Input, Output> {
             Intersection intersection = usedIntersectionMap.get(key);
             List<GreenLightDuration> greenLightDurations = new ArrayList<>();
             for (Integer streetId : intersection.incomingStreets.keySet()) {
-                greenLightDurations.add(new GreenLightDuration(intersection.incomingStreets.get(streetId).getStreetName(), 1));
+                StreetExt streetExt = intersection.incomingStreets.get(streetId);
+                Double timer = 1.0;
+                if(streetExt.expectedCars != 0) {
+                    timer = Math.ceil(maxLightLength * (streetExt.expectedCars / highestExpectCars));
+                }
+                greenLightDurations.add(new GreenLightDuration(streetExt.getStreetName(), timer.intValue()));
             }
             scheduleList.add(new IntersectionSchedule(key, intersection.incomingStreets.size(), greenLightDurations));
         }
@@ -136,6 +156,7 @@ public class Algorithm1 extends ParameterizedAlgorithm<Input, Output> {
     public class StreetExt extends Street {
 
         Integer numberOfCarsAtStart = 0;
+        Integer expectedCars = 0;
 
         public StreetExt(Street street) {
             super(street.streetId, street.streetName, street.startIntersection, street.endIntersection, street.timeToGetFromStartToEnd);
@@ -143,6 +164,10 @@ public class Algorithm1 extends ParameterizedAlgorithm<Input, Output> {
 
         public void addCar() {
             numberOfCarsAtStart--;
+        }
+
+        public void addExpectCar() {
+            expectedCars++;
         }
     }
 }

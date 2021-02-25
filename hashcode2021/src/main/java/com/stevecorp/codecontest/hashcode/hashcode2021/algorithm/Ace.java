@@ -13,9 +13,11 @@ public class Ace extends BasicAlgorithm<Input, Output> {
     public static final String RELATIVE_INTERSECTION_DURATION_MULTIPLIER = "RELATIVE_INTERSECTION_DURATION_MULTIPLIER";
     private long relativeIntersectionDurationMultiplier = 3;
     private double relativeIntersectionSizeMultiplier = 0.2;
+    private double maxTime;
 
     @Override
     public Output solve(final Input input) {
+        maxTime = input.simulationDurationSeconds;
 //            input.simulationDurationSeconds;
 //            input.numberOfIntersections;
 //            input.numberOfStreets;
@@ -82,7 +84,7 @@ public class Ace extends BasicAlgorithm<Input, Output> {
                 .greenLightDuration(relativeStreetTimingForIntersection.get(extendedStreet))
                 .build()).collect(Collectors.toList());
 
-        List<Output.GreenLightDuration> onlyValidDurations = durations.stream().filter(greenLightDuration -> greenLightDuration.greenLightDuration >= 1).collect(Collectors.toList());
+        List<Output.GreenLightDuration> onlyValidDurations = durations.stream().filter(greenLightDuration -> greenLightDuration.greenLightDuration >= 1 && greenLightDuration.greenLightDuration < maxTime).collect(Collectors.toList());
 
         return Output.IntersectionSchedule.builder()
                 .intersectionId(intersection.id)

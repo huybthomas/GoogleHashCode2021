@@ -22,10 +22,7 @@ public class HashCode2021 {
                 .withInputParser(InputParserImpl.class)
                 .withAlgorithms(
                         AlgorithmSpecification.builder()
-                                .parameterizedAlgorithm(Ace.class)
-                                .withParameters(
-                                        BoundedParameter.of(Ace.RELATIVE_INTERSECTION_DURATION_MULTIPLIER, 1,10, 1)
-                                )
+                                .basicAlgorithm(Ace.class)
                                 .build()
                 )
                 .withOutputValidator(OutputValidatorImpl.class)
