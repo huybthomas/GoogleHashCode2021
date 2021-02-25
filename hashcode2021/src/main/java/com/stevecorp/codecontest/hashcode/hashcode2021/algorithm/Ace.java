@@ -1,18 +1,18 @@
 package com.stevecorp.codecontest.hashcode.hashcode2021.algorithm;
 
 import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.BasicAlgorithm;
-import com.stevecorp.codecontest.hashcode.facilitator.configurator.algorithm.algorithm.ParameterizedAlgorithm;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Input;
 import com.stevecorp.codecontest.hashcode.hashcode2021.component.Output;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class Ace extends BasicAlgorithm<Input, Output> {
 
     public static final String RELATIVE_INTERSECTION_DURATION_MULTIPLIER = "RELATIVE_INTERSECTION_DURATION_MULTIPLIER";
-    private long relativeIntersectionDurationMultiplier = 10;
+    private long relativeIntersectionDurationMultiplier = 3;
+    private double relativeIntersectionSizeMultiplier = 0.2;
 
     @Override
     public Output solve(final Input input) {
@@ -65,13 +65,18 @@ public class Ace extends BasicAlgorithm<Input, Output> {
     private List<Output.IntersectionSchedule> parse(Map<Integer, Intersection> intersections, List<ExtendedCarPath> extendedCarPaths, Map<Integer, ExtendedStreet> extendedStreet) {
         //Determine intersection schedule based on number of expected cars
         return intersections.entrySet().stream()
-                .map(entry -> computeToIntersectionSchedule(entry.getValue())).collect(Collectors.toList());
+                .map(entry -> computeToIntersectionSchedule(entry.getValue()))
+                .filter(intersectionSchedule -> intersectionSchedule.numberOfIncomingStreets > 0).collect(Collectors.toList());
     }
 
     private Output.IntersectionSchedule computeToIntersectionSchedule(Intersection intersection) {
         List<ExtendedStreet> inputs = intersection.inputs;
         long max = inputs.stream().mapToLong(extendedStreet -> extendedStreet.totalNumCars).max().getAsLong();
-        Map<ExtendedStreet, Integer> relativeStreetTimingForIntersection = inputs.stream().collect(Collectors.toMap(extendedStreet -> extendedStreet, extendedStreet -> (int) (((double) extendedStreet.totalNumCars / (double) max) * relativeIntersectionDurationMultiplier)));
+        Map<ExtendedStreet, Integer> relativeStreetTimingForIntersection = inputs.stream().collect(Collectors.toMap(extendedStreet -> extendedStreet, extendedStreet -> {
+            var normalizedWeight = (double) extendedStreet.totalNumCars / (double) max;
+            var timingForIntersection = normalizedWeight * ((intersection.inputs.size() + intersection.outputs.size()) * relativeIntersectionSizeMultiplier);
+            return (int) Math.ceil(timingForIntersection * relativeIntersectionDurationMultiplier);
+        }));
         List<Output.GreenLightDuration> durations = inputs.stream().map(extendedStreet -> Output.GreenLightDuration.builder()
                 .streetName(extendedStreet.street.streetName)
                 .greenLightDuration(relativeStreetTimingForIntersection.get(extendedStreet))
@@ -88,14 +93,16 @@ public class Ace extends BasicAlgorithm<Input, Output> {
 
     private Map<Integer, ExtendedStreet> parseStreets(Map<Integer, Input.Street> streetMap, List<Input.CarPath> carPaths) {
         //Num cars on street
+        AtomicInteger i = new AtomicInteger();
         return streetMap.entrySet().stream().parallel()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     Input.Street street = entry.getValue();
                     ExtendedStreet extendedStreet = new ExtendedStreet(street);
 
-                    extendedStreet.totalNumCars = carPaths.stream().parallel()
+                    AtomicInteger j = new AtomicInteger();
+                    extendedStreet.totalNumCars = carPaths.stream()
                             .map(Input.CarPath::getStreetIds)
-                            .mapToLong(streetIds -> streetIds.stream().parallel().filter(id -> id.equals(street.streetId)).count()).sum();
+                            .mapToLong(streetIds -> streetIds.stream().filter(id -> id.equals(street.streetId)).count()).sum();
 
                     return extendedStreet;
                 }));
